@@ -75,7 +75,8 @@ def sample(pub_cmd,pub_act,rate,controller,
             ob_tp1, _ = step(ac_t,pub_act,pub_cmd,rate)
             rew_t = 0
             for i in range(9):
-                rew_t += ob_tp1[i*12]-ob_t[i*12]
+                # rew_t += ob_tp1[i*12]-ob_t[i*12]
+                rew_t += ob_tp1[i*12]/9
 
             # Append to vectors
             obs_t.append(ob_t)

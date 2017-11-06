@@ -52,12 +52,12 @@ def cheetah_cost_fn(state, action, next_state):
 
 def laika_cost_fn(state, action, next_state):
 
-    score = 0
+    cost = 0
 
     for i in range(9):
-        score -= state[i*12] + state[i*12+6]
+        cost -= ((next_state[i*12]-state[i*12]) + state[i*12+6])/9
 
-    return score
+    return cost
 
 #========================================================
 #

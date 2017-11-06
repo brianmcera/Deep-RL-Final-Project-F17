@@ -14,8 +14,14 @@ class Controller():
 class RandomController(Controller):
 	def __init__(self):
 		print('Initializing random controller...')
-		self.action_high = np.concatenate((12*np.ones(32),10*np.ones(4)))
-		self.action_low = np.concatenate((5*np.ones(32),-10*np.ones(4)))
+		rl_high = 12
+		rl_low = 5
+		torque_high = 5
+		torque_low = -5
+		n_cables = 32
+		n_legs = 4
+		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
+		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
 		self.ac_dim = 36
 
 	def get_action(self, state):
@@ -37,8 +43,15 @@ class MPCcontroller(Controller):
 		self.num_simulated_paths = num_simulated_paths
 		self.ac_dim = 36
 		self.obs_dim = 108
-		self.action_high = np.concatenate((12*np.ones(32),10*np.ones(4)))
-		self.action_low = np.concatenate((5*np.ones(32),-10*np.ones(4)))
+
+		rl_high = 12
+		rl_low = 5
+		torque_high = 5
+		torque_low = -5
+		n_cables = 32
+		n_legs = 4
+		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
+		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
 
 	def get_action(self, state):
 		# Broadcast state for batch calculations
