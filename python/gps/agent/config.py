@@ -61,7 +61,6 @@ except rospkg.common.ResourceNotFound as e:
     AGENT_ROS = {}
     LOGGER.debug('No gps_agent_pkg: %s', e)
 
-
 # AgentMuJoCo
 AGENT_MUJOCO = {
     'substeps': 1,
