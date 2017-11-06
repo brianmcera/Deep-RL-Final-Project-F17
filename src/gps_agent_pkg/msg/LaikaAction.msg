@@ -1,2 +1,2 @@
 Header header
-std_msgs/Float64[] actions
+float64[] actions
