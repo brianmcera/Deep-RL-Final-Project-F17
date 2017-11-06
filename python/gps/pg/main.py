@@ -72,7 +72,6 @@ def sample(pub_cmd,pub_act,rate,controller,
 
             # Calculate action and step the environment
             ac_t = controller.get_action(ob_t)
-            print(ob_t)
             ob_tp1, _ = step(ac_t,pub_act,pub_cmd,rate)
             rew_t = 0
             for i in range(9):
@@ -92,7 +91,7 @@ def sample(pub_cmd,pub_act,rate,controller,
                 "actions":np.array(acs_t),
                 "rewards":np.array(rews_t)}
         paths.append(path)
-
+        print(len(paths))
     return paths
 
 # Utility to compute cost a path for a given cost function
@@ -358,8 +357,8 @@ def main():
     parser.add_argument('--render', action='store_true')
     # Training args
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-3)
-    parser.add_argument('--onpol_iters', '-n', type=int, default=1)
-    parser.add_argument('--dyn_iters', '-nd', type=int, default=60)
+    parser.add_argument('--onpol_iters', '-n', type=int, default=5)
+    parser.add_argument('--dyn_iters', '-nd', type=int, default=100)
     parser.add_argument('--batch_size', '-b', type=int, default=512)
     # Data collection
     parser.add_argument('--random_paths', '-r', type=int, default=10)
@@ -387,7 +386,7 @@ def main():
 
     # Initialize ros
     rospy.init_node('laika_control', anonymous=True)
-    rate = rospy.Rate(10) # 10hz
+    rate = rospy.Rate(100) # 10hz
 
     # Initialize publishers and subscribers
     pub_cmd = rospy.Publisher('cmd', LaikaCommand, queue_size=1)
