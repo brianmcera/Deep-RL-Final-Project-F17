@@ -3,16 +3,54 @@ import tensorflow as tf
 import gym
 from dynamics import NNDynamicsModel
 from controllers import MPCcontroller, RandomController
-from cost_functions import cheetah_cost_fn, trajectory_cost_fn
+from cost_functions import laika_cost_fn, trajectory_cost_fn
 import time
 import logz
 import os
 import copy
 import matplotlib.pyplot as plt
-from cheetah_env import HalfCheetahEnvNew
 
-def sample(env,
-           controller,
+import rospy
+from gps_agent_pkg.msg import LaikaCommand, LaikaState, LaikaStateArray, LaikaAction
+
+curr_state = np.zeros(108)
+
+def reset(pub_cmd,rate):
+    cmd_msg = LaikaCommand()
+    cmd_msg.header.stamp = rospy.Time.now()
+    cmd_msg.cmd = 'reset'
+    pub_cmd.publish(cmd_msg)
+    rate.sleep()
+    obs = curr_state
+    return obs
+
+def step(action,pub_act,pub_cmd,rate):
+    act_msg = LaikaAction()
+    cmd_msg = LaikaCommand()
+    act_msg.header.stamp = rospy.Time.now()
+    act_msg.actions = action
+    cmd_msg.header.stamp = rospy.Time.now()
+    cmd_msg.cmd = 'step'
+    pub_act.publish(act_msg)
+    pub_cmd.publish(cmd_msg)
+    rate.sleep()
+    ob_tp1 = curr_state
+    done = 0
+
+    return ob_tp1,done
+
+def state_callback(msg):
+    state = []
+    for i in range(len(msg.states)):
+        state = state+[msg.states[i].position.x,msg.states[i].position.y,msg.states[i].position.z] \
+            +[msg.states[i].orientation.x,msg.states[i].orientation.y,msg.states[i].orientation.z] \
+            +[msg.states[i].lin_vel.x,msg.states[i].lin_vel.y,msg.states[i].lin_vel.z] \
+            +[msg.states[i].ang_vel.x,msg.states[i].ang_vel.y,msg.states[i].ang_vel.z]
+    global curr_state
+    curr_state = state
+    # rospy.loginfo(msg)
+
+def sample(pub_cmd,pub_act,rate,controller,
            num_paths=10,
            horizon=1000,
            render=False,
@@ -28,15 +66,17 @@ def sample(env,
 
     for i in range(num_paths):
         obs_t, obs_tp1, acs_t, rews_t = [], [], [], []
-        ob_t = env.reset()
+        ob_t = reset(pub_cmd,rate)
+        # print(ob_t)
         for _ in range(horizon):
-            if render:
-                env.render()
-                time.sleep(0.05)
 
             # Calculate action and step the environment
             ac_t = controller.get_action(ob_t)
-            ob_tp1, rew_t, done, _ = env.step(ac_t)
+            print(ob_t)
+            ob_tp1, _ = step(ac_t,pub_act,pub_cmd,rate)
+            rew_t = 0
+            for i in range(9):
+                rew_t += ob_tp1[i*12]-ob_t[i*12]
 
             # Append to vectors
             obs_t.append(ob_t)
@@ -102,19 +142,19 @@ def compute_normalization(data):
                     'mean_acs':mean_action, 'std_acs':std_action}
     return normalization
 
-def plot_comparison(env, dyn_model):
+def plot_comparison(dyn_model, pub_act, pub_cmd, rate):
     """
     Write a function to generate plots comparing the behavior of the model predictions for each element of the state to the actual ground truth, using randomly sampled actions.
     """
-    rand_cont = RandomController(env)
-    s = env.reset()
+    rand_cont = RandomController()
+    s = reset(pub_cmd, rate)
     env_state_traj = s
     model_state_traj = s
     steps = 100
     for i in range(steps):
         a = rand_cont.get_action(None)
         # Step environment
-        env_s, _, _, _ = env.step(a)
+        env_s, _ = step(a, pub_act, pub_cmd, rate)
         env_state_traj = np.vstack((env_state_traj,env_s))
         # Step model
         if i == 0:
@@ -132,7 +172,7 @@ def plot_comparison(env, dyn_model):
         plt.draw()
     plt.show()
 
-def train(env,
+def train(pub_cmd,pub_act,rate,
          cost_fn,
          logdir=None,
          render=False,
@@ -193,8 +233,8 @@ def train(env,
     # agent, with which we'll begin to train our dynamics
     # model.
 
-    rand_controller = RandomController(env)
-    paths = sample(env,rand_controller,num_paths_random,env_horizon,render)
+    rand_controller = RandomController()
+    paths = sample(pub_cmd,pub_act,rate,rand_controller,num_paths_random,env_horizon,render)
     data = paths_to_array(paths)
 
     #========================================================
@@ -213,8 +253,7 @@ def train(env,
     #
     sess = tf.Session()
 
-    dyn_model = NNDynamicsModel(env=env,
-                                n_layers=n_layers,
+    dyn_model = NNDynamicsModel(n_layers=n_layers,
                                 size=size,
                                 activation=activation,
                                 output_activation=output_activation,
@@ -224,8 +263,7 @@ def train(env,
                                 learning_rate=learning_rate,
                                 sess=sess)
 
-    mpc_controller = MPCcontroller(env=env,
-                                   dyn_model=dyn_model,
+    mpc_controller = MPCcontroller(dyn_model=dyn_model,
                                    horizon=mpc_horizon,
                                    cost_fn=cost_fn,
                                    num_simulated_paths=num_simulated_paths)
@@ -253,13 +291,16 @@ def train(env,
         for i in range(num_paths_onpol):
             print('On policy path: %i' % i)
             obs_t, obs_tp1, acs_t, rews_t = [], [], [], []
-            s_t = env.reset()
+            s_t = reset(pub_cmd,rate)
             total_return = 0
 
             for j in range(env_horizon):
                 # print('Timestep: %i, Return: %g' % (j,total_return))
                 a_t = mpc_controller.get_action(s_t)
-                s_tp1,r_t,done,_ = env.step(a_t)
+                s_tp1,_ = step(a_t,pub_act,pub_cmd,rate)
+                r_t = 0
+                for i in range(9):
+                    r_t += s_tp1[i*12]-s_t[i*12]
                 total_return += r_t
 
                 if render:
@@ -344,12 +385,18 @@ def main():
     if not(os.path.exists(logdir)):
         os.makedirs(logdir)
 
-    # Make env
-    if args.env_name is "HalfCheetah-v1":
-        env = HalfCheetahEnvNew()
-        cost_fn = cheetah_cost_fn
-    train(env=env,
-                 cost_fn=cost_fn,
+    # Initialize ros
+    rospy.init_node('laika_control', anonymous=True)
+    rate = rospy.Rate(10) # 10hz
+
+    # Initialize publishers and subscribers
+    pub_cmd = rospy.Publisher('cmd', LaikaCommand, queue_size=1)
+    pub_act = rospy.Publisher('action', LaikaAction, queue_size=1)
+    sub = rospy.Subscriber('state', LaikaStateArray, state_callback)
+
+    cost_fn = laika_cost_fn
+
+    train(pub_cmd,pub_act,rate,cost_fn=cost_fn,
                  logdir=logdir,
                  render=args.render,
                  learning_rate=args.learning_rate,
@@ -364,8 +411,7 @@ def main():
                  n_layers = args.n_layers,
                  size=args.size,
                  activation=tf.nn.relu,
-                 output_activation=None,
-                 )
+                 output_activation=None)
 
 if __name__ == "__main__":
     main()

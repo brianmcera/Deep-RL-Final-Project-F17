@@ -28,7 +28,6 @@ def shuffle(a, o):
 
 class NNDynamicsModel():
     def __init__(self,
-                 env,
                  n_layers,
                  size,
                  activation,
@@ -41,8 +40,8 @@ class NNDynamicsModel():
                  ):
         """ Note: Be careful about normalization """
         print('Initializing dynamics model...')
-        obs_dim = env.observation_space.shape[0]
-        ac_dim = env.action_space.shape[0]
+        obs_dim = 108
+        ac_dim = 36
 
         self.normalization = normalization
         self.batch_size = batch_size

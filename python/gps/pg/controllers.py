@@ -12,11 +12,11 @@ class Controller():
 
 
 class RandomController(Controller):
-	def __init__(self, env):
+	def __init__(self):
 		print('Initializing random controller...')
-		self.action_high = env.action_space.high
-		self.action_low = env.action_space.low
-		self.ac_dim = len(self.action_high)
+		self.action_high = np.concatenate((12*np.ones(32),10*np.ones(4)))
+		self.action_low = np.concatenate((5*np.ones(32),-10*np.ones(4)))
+		self.ac_dim = 36
 
 	def get_action(self, state):
 		action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
@@ -25,22 +25,20 @@ class RandomController(Controller):
 class MPCcontroller(Controller):
 	""" Controller built using the MPC method outlined in https://arxiv.org/abs/1708.02596 """
 	def __init__(self,
-				 env,
 				 dyn_model,
 				 horizon=5,
 				 cost_fn=None,
 				 num_simulated_paths=10,
 				 ):
 		print('Initializing MPC controller...')
-		self.env = env
 		self.dyn_model = dyn_model
 		self.horizon = horizon
 		self.cost_fn = cost_fn
 		self.num_simulated_paths = num_simulated_paths
-		self.action_high = env.action_space.high
-		self.action_low = env.action_space.low
-		self.ac_dim = len(self.action_high)
-		self.obs_dim = env.observation_space.shape[0]
+		self.ac_dim = 36
+		self.obs_dim = 108
+		self.action_high = np.concatenate((12*np.ones(32),10*np.ones(4)))
+		self.action_low = np.concatenate((5*np.ones(32),-10*np.ones(4)))
 
 	def get_action(self, state):
 		# Broadcast state for batch calculations

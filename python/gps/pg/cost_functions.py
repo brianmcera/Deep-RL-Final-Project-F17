@@ -2,7 +2,7 @@ import numpy as np
 
 
 #========================================================
-# 
+#
 # Environment-specific cost functions:
 #
 
@@ -50,8 +50,17 @@ def cheetah_cost_fn(state, action, next_state):
     score -= (next_state[17] - state[17]) / 0.01 #+ 0.1 * (np.sum(action**2))
     return score
 
+def laika_cost_fn(state, action, next_state):
+
+    score = 0
+
+    for i in range(9):
+        score -= state[i*12] + state[i*12+6]
+
+    return score
+
 #========================================================
-# 
+#
 # Cost function for a whole trajectory:
 #
 
