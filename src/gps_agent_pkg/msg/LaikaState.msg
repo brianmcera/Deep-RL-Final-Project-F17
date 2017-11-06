@@ -1,4 +1,4 @@
-string body_id
+uint32 body_id
 geometry_msgs/Point position
 geometry_msgs/Point orientation
 geometry_msgs/Point lin_vel
