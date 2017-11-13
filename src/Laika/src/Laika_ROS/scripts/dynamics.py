@@ -40,7 +40,7 @@ class NNDynamicsModel():
                  ):
         """ Note: Be careful about normalization """
         print('Initializing dynamics model...')
-        obs_dim = 108
+        obs_dim = 140
         ac_dim = 36
 
         self.normalization = normalization

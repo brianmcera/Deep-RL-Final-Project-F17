@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import rospy
 from Laika_ROS.msg import LaikaCommand, LaikaState, LaikaStateArray, LaikaAction
 
-curr_state = np.zeros(108)
+curr_state = np.zeros(140) #number also hardcoded in dynamic and controller files
 
 def reset(pub_cmd,rate):
     cmd_msg = LaikaCommand()
@@ -48,8 +48,10 @@ def state_callback(msg):
             +[msg.states[i].orientation.x,msg.states[i].orientation.y,msg.states[i].orientation.z] \
             +[msg.states[i].lin_vel.x,msg.states[i].lin_vel.y,msg.states[i].lin_vel.z] \
             +[msg.states[i].ang_vel.x,msg.states[i].ang_vel.y,msg.states[i].ang_vel.z]
+    state = state+msg.cable_rl
     global curr_state
     curr_state = state
+    print(curr_state.shape)
     # rospy.loginfo(msg)
 
 def sample(pub_cmd,pub_act,rate,controller,

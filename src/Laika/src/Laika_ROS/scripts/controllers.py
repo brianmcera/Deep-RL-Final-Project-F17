@@ -14,7 +14,7 @@ class Controller():
 class RandomController(Controller):
 	def __init__(self):
 		print('Initializing random controller...')
-		rl_high = 12
+		rl_high = 12 #kept for now, but useless since the checks will happen on NTRT side
 		rl_low = 5
 		torque_high = 5
 		torque_low = -5
@@ -23,9 +23,16 @@ class RandomController(Controller):
 		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
 		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
 		self.ac_dim = 36
+                self.cable_motor_vel = 0.15 
+                self.dt = 0.001
+                self.num_cables = n_cables
 
 	def get_action(self, state):
-		action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
+		#action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
+                print((np.random.randint(-1,2,self.num_cables)))
+                print((self.action_low[self.num_cables:]+np.random.uniform(size=self.ac_dim-self.num_cables)*(self.action_high-self.action_low)[self.num_cables:]))
+                print(type(self.ac_dim-self.num_cables))
+                action = np.concatenate((np.random.randint(-1,2,self.num_cables),self.action_low[self.num_cables:]+np.random.uniform(size=(self.ac_dim-self.num_cables))*(self.action_high-self.action_low)[self.num_cables:]))
 		return action
 
 class MPCcontroller(Controller):
@@ -52,7 +59,9 @@ class MPCcontroller(Controller):
 		n_legs = 4
 		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
 		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
-
+                self.cable_motor_vel = 0.15 #m/s
+                self.num_cables = n_cables
+                
 	def get_action(self, state):
 		# Broadcast state for batch calculations
 		batch_state = np.tile(state,(self.num_simulated_paths,1))
@@ -61,7 +70,8 @@ class MPCcontroller(Controller):
 
 		for i in range(self.horizon):
 			# Sample actions
-			batch_action = self.action_low+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim))*(self.action_high-self.action_low)
+			#batch_action = self.action_low+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim))*(self.action_high-self.action_low)
+                        batch_action = np.concatenate((np.random.randint(-1,2,(self.num_simulated_paths,self.num_cables))),(self.action_low[self.num_cables:]+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim-self.num_cables))*(self.action_high-self.action_low)[self.num_cables:]))
 			# Simulate dynamics from NN model
 			batch_state = self.dyn_model.predict(batch_state,batch_action)
 			# Add next state batch to trajectory
