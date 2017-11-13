@@ -27,11 +27,13 @@ struct LaikaStateArray_
 
   LaikaStateArray_()
     : header()
-    , states()  {
+    , states()
+    , cable_rl()  {
     }
   LaikaStateArray_(const ContainerAllocator& _alloc)
     : header(_alloc)
-    , states(_alloc)  {
+    , states(_alloc)
+    , cable_rl(_alloc)  {
   (void)_alloc;
     }
 
@@ -42,6 +44,9 @@ struct LaikaStateArray_
 
    typedef std::vector< ::Laika_ROS::LaikaState_<ContainerAllocator> , typename ContainerAllocator::template rebind< ::Laika_ROS::LaikaState_<ContainerAllocator> >::other >  _states_type;
   _states_type states;
+
+   typedef std::vector<float, typename ContainerAllocator::template rebind<float>::other >  _cable_rl_type;
+  _cable_rl_type cable_rl;
 
 
 
@@ -77,7 +82,7 @@ namespace message_traits
 
 
 // BOOLTRAITS {'IsFixedSize': False, 'IsMessage': True, 'HasHeader': True}
-// {'geometry_msgs': ['/opt/ros/kinetic/share/geometry_msgs/cmake/../msg'], 'std_msgs': ['/opt/ros/kinetic/share/std_msgs/cmake/../msg'], 'Laika_ROS': ['/home/brian/gps-spine/src/Laika/src/Laika_ROS/msg']}
+// {'geometry_msgs': ['/opt/ros/indigo/share/geometry_msgs/cmake/../msg'], 'std_msgs': ['/opt/ros/indigo/share/std_msgs/cmake/../msg'], 'Laika_ROS': ['/home/edward/gps-spine/src/Laika/src/Laika_ROS/msg']}
 
 // !!!!!!!!!!! ['__class__', '__delattr__', '__dict__', '__doc__', '__eq__', '__format__', '__getattribute__', '__hash__', '__init__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_parsed_fields', 'constants', 'fields', 'full_name', 'has_header', 'header_present', 'names', 'package', 'parsed_fields', 'short_name', 'text', 'types']
 
@@ -120,12 +125,12 @@ struct MD5Sum< ::Laika_ROS::LaikaStateArray_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "bf155858bb83565001c668bbed4dc7ae";
+    return "e19ca31cf4a3cbb12d873eb3d8084a5d";
   }
 
   static const char* value(const ::Laika_ROS::LaikaStateArray_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0xbf155858bb835650ULL;
-  static const uint64_t static_value2 = 0x01c668bbed4dc7aeULL;
+  static const uint64_t static_value1 = 0xe19ca31cf4a3cbb1ULL;
+  static const uint64_t static_value2 = 0x2d873eb3d8084a5dULL;
 };
 
 template<class ContainerAllocator>
@@ -146,6 +151,7 @@ struct Definition< ::Laika_ROS::LaikaStateArray_<ContainerAllocator> >
   {
     return "Header header\n\
 LaikaState[] states\n\
+float32[] cable_rl\n\
 \n\
 ================================================================================\n\
 MSG: std_msgs/Header\n\
@@ -199,6 +205,7 @@ namespace serialization
     {
       stream.next(m.header);
       stream.next(m.states);
+      stream.next(m.cable_rl);
     }
 
     ROS_DECLARE_ALLINONE_SERIALIZER
@@ -227,6 +234,12 @@ struct Printer< ::Laika_ROS::LaikaStateArray_<ContainerAllocator> >
       s << std::endl;
       s << indent;
       Printer< ::Laika_ROS::LaikaState_<ContainerAllocator> >::stream(s, indent + "    ", v.states[i]);
+    }
+    s << indent << "cable_rl[]" << std::endl;
+    for (size_t i = 0; i < v.cable_rl.size(); ++i)
+    {
+      s << indent << "  cable_rl[" << i << "]: ";
+      Printer<float>::stream(s, indent + "  ", v.cable_rl[i]);
     }
   }
 };

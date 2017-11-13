@@ -67,14 +67,14 @@ set(Laika_ROS_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(Laika_ROS_SOURCE_PREFIX /home/brian/gps-spine/src/Laika/src/Laika_ROS)
-  set(Laika_ROS_DEVEL_PREFIX /home/brian/gps-spine/src/Laika/devel)
+  set(Laika_ROS_SOURCE_PREFIX /home/edward/gps-spine/src/Laika/src/Laika_ROS)
+  set(Laika_ROS_DEVEL_PREFIX /home/edward/gps-spine/src/Laika/devel)
   set(Laika_ROS_INSTALL_PREFIX "")
   set(Laika_ROS_PREFIX ${Laika_ROS_DEVEL_PREFIX})
 else()
   set(Laika_ROS_SOURCE_PREFIX "")
   set(Laika_ROS_DEVEL_PREFIX "")
-  set(Laika_ROS_INSTALL_PREFIX /home/brian/gps-spine/src/Laika/install)
+  set(Laika_ROS_INSTALL_PREFIX /home/edward/gps-spine/src/Laika/install)
   set(Laika_ROS_PREFIX ${Laika_ROS_INSTALL_PREFIX})
 endif()
 
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(Laika_ROS_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/brian/gps-spine/src/Laika/devel/include;/home/brian/gps-spine/src/Laika/src/Laika_ROS/include " STREQUAL " ")
+if(NOT "/home/edward/gps-spine/src/Laika/devel/include " STREQUAL " ")
   set(Laika_ROS_INCLUDE_DIRS "")
-  set(_include_dirs "/home/brian/gps-spine/src/Laika/devel/include;/home/brian/gps-spine/src/Laika/src/Laika_ROS/include")
+  set(_include_dirs "/home/edward/gps-spine/src/Laika/devel/include")
   foreach(idir ${_include_dirs})
     if(IS_ABSOLUTE ${idir} AND IS_DIRECTORY ${idir})
       set(include ${idir})
@@ -103,7 +103,7 @@ if(NOT "/home/brian/gps-spine/src/Laika/devel/include;/home/brian/gps-spine/src/
         message(FATAL_ERROR "Project 'Laika_ROS' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  Ask the maintainer 'brian <brianmcera@berkeley.edu>' to fix it.")
       endif()
     else()
-      message(FATAL_ERROR "Project 'Laika_ROS' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/brian/gps-spine/src/Laika/src/Laika_ROS/${idir}'.  Ask the maintainer 'brian <brianmcera@berkeley.edu>' to fix it.")
+      message(FATAL_ERROR "Project 'Laika_ROS' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/edward/gps-spine/src/Laika/src/Laika_ROS/${idir}'.  Ask the maintainer 'brian <brianmcera@berkeley.edu>' to fix it.")
     endif()
     _list_append_unique(Laika_ROS_INCLUDE_DIRS ${include})
   endforeach()
@@ -122,7 +122,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/brian/gps-spine/src/Laika/devel/lib;/opt/ros/kinetic/lib)
+    foreach(path /home/edward/gps-spine/src/Laika/devel/lib;/home/edward/gps-spine/src/Laika/devel/lib;/opt/ros/indigo/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -145,7 +145,7 @@ foreach(library ${libraries})
   endif()
 endforeach()
 
-set(Laika_ROS_EXPORTED_TARGETS "Laika_ROS_generate_messages_cpp;Laika_ROS_generate_messages_eus;Laika_ROS_generate_messages_lisp;Laika_ROS_generate_messages_nodejs;Laika_ROS_generate_messages_py")
+set(Laika_ROS_EXPORTED_TARGETS "Laika_ROS_generate_messages_cpp;Laika_ROS_generate_messages_lisp;Laika_ROS_generate_messages_py")
 # create dummy targets for exported code generation targets to make life of users easier
 foreach(t ${Laika_ROS_EXPORTED_TARGETS})
   if(NOT TARGET ${t})
@@ -162,12 +162,12 @@ foreach(depend ${depends})
   if(${count} EQUAL 1)
     # simple dependencies must only be find_package()-ed once
     if(NOT ${Laika_ROS_dep}_FOUND)
-      find_package(${Laika_ROS_dep} REQUIRED NO_MODULE)
+      find_package(${Laika_ROS_dep} REQUIRED)
     endif()
   else()
     # dependencies with components must be find_package()-ed again
     list(REMOVE_AT depend_list 0)
-    find_package(${Laika_ROS_dep} REQUIRED NO_MODULE ${depend_list})
+    find_package(${Laika_ROS_dep} REQUIRED ${depend_list})
   endif()
   _list_append_unique(Laika_ROS_INCLUDE_DIRS ${${Laika_ROS_dep}_INCLUDE_DIRS})
 

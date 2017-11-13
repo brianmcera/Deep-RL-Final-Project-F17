@@ -1,0 +1,12 @@
+3.1
+-------------------------------------
+|       Iteration |               0 |
+|     AverageCost |            -520 |
+|         StdCost |            67.7 |
+|     MinimumCost |            -632 |
+|     MaximumCost |            -385 |
+|   AverageReturn |             548 |
+|       StdReturn |            22.8 |
+|   MinimumReturn |             502 |
+|   MaximumReturn |             581 |
+-------------------------------------
