@@ -71,7 +71,7 @@ class MPCcontroller(Controller):
 		for i in range(self.horizon):
 			# Sample actions
 			#batch_action = self.action_low+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim))*(self.action_high-self.action_low)
-                        batch_action = np.concatenate((np.random.randint(-1,2,(self.num_simulated_paths,self.num_cables)),self.action_low[self.num_cables:]+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim-self.num_cables))*(self.action_high-self.action_low)[self.num_cables:]))
+                        batch_action = np.concatenate((np.random.randint(-1,2,(self.num_simulated_paths,self.num_cables)),self.action_low[self.num_cables:]+np.random.uniform(size=(self.num_simulated_paths,self.ac_dim-self.num_cables))*(self.action_high-self.action_low)[self.num_cables:]),axis=1)
 			# Simulate dynamics from NN model
 			batch_state = self.dyn_model.predict(batch_state,batch_action)
 			# Add next state batch to trajectory
