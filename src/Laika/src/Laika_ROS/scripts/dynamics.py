@@ -12,9 +12,9 @@ def build_mlp(input_placeholder,
               ):
     out = input_placeholder
     with tf.variable_scope(scope):
-        for _ in range(n_layers):
-            out = tf.layers.dense(out, size, activation=activation)
-        out = tf.layers.dense(out, output_size, activation=output_activation)
+        for i in range(n_layers):
+            out = tf.layers.dense(out, size, activation=activation, name='layer_'+str(i))
+        out = tf.layers.dense(out, output_size, activation=output_activation, name='layer_out')
     return out
 
 def shuffle(a, o):
@@ -47,6 +47,7 @@ class NNDynamicsModel():
         self.batch_size = batch_size
         self.iterations = iterations
         self.sess = sess
+        self.n_layers = n_layers
 
         # Create mlp, loss, and training op
         self.norm_obs_ac_ph = tf.placeholder(tf.float32,[None,obs_dim+ac_dim])
@@ -58,6 +59,8 @@ class NNDynamicsModel():
         # Define other parameters
         self.print_int = 100
         self.eps = 1e-6
+
+        self.fit_counter = 0
 
     def fit(self, data):
         """
@@ -110,6 +113,27 @@ class NNDynamicsModel():
                     feed_dict={self.norm_obs_ac_ph:norm_obs_acs_batch,
                                 self.norm_deltas_act:norm_deltas_batch})
                 print('Iteration: %d, Loss: %g' % (i,curr_loss))
+
+        print('Saving nn weights')
+        for i in range(self.n_layers+1):
+            model_name = 'dyn_model/'
+            if i == self.n_layers:
+                layer_name = 'layer_out'
+                kernel = tf.get_default_graph().get_tensor_by_name(model_name+layer_name+'/kernel:0').eval(session=self.sess)
+                bias = tf.get_default_graph().get_tensor_by_name(model_name+layer_name+'/bias:0').eval(session=self.sess)
+                weights = np.vstack((kernel,bias.reshape(1,len(bias))))
+                print(weights.shape)
+            else:
+                layer_name = 'layer_'+str(i)
+                kernel = tf.get_default_graph().get_tensor_by_name(model_name+layer_name+'/kernel:0').eval(session=self.sess)
+                bias = tf.get_default_graph().get_tensor_by_name(model_name+layer_name+'/bias:0').eval(session=self.sess)
+                weights = np.vstack((kernel,bias.reshape(1,len(bias))))
+                print(weights.shape)
+            filename = './data/model_weights/fit_'+str(self.fit_counter)+'_'+layer_name+'.csv'
+            np.savetxt(filename,weights,delimiter=',')
+
+
+        self.fit_counter += 1
 
     def predict(self, states, actions):
         """ Write a function to take in a batch of (unnormalized) states and (unnormalized) actions and return the (unnormalized) next states as predicted by using the model """
