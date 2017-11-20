@@ -11,50 +11,74 @@ import logz
 import os
 import copy
 import matplotlib.pyplot as plt
+from state_callback import state_callback
 
 import rospy
 from Laika_ROS.msg import LaikaCommand, LaikaState, LaikaStateArray, LaikaAction
 
-curr_state = np.zeros(140) #number also hardcoded in dynamic and controller files
+# curr_state = np.zeros(140) #number also hardcoded in dynamic and controller files
 
-def reset(pub_cmd,rate):
-    cmd_msg = LaikaCommand()
-    cmd_msg.header.stamp = rospy.Time.now()
-    cmd_msg.cmd = 'reset'
-    pub_cmd.publish(cmd_msg)
-    rate.sleep()
-    obs = curr_state
-    return obs
+# def reset(state_cb,pub_cmd,rate):
+#     cmd_msg = LaikaCommand()
+#     cmd_msg.header.stamp = rospy.Time.now()
+#     cmd_msg.cmd = 'reset'
+#
+#     pub_cmd.publish(cmd_msg)
+#
+#     state_cb.threading_cond.acquire()
+#
+#     while not state_cb.state_update:
+#         print("In reset while loop")
+#         state_cb.threading_cond.wait()
+#
+#     print("Out of while loop")
+#     obs = state_cb.get_curr_state()
+#
+#     state_cb.threading_cond.release()
+#
+#     return obs
+#
+# def step(action,state_cb,pub_act,pub_cmd,rate):
+#     # tmp = curr_state
+#     act_msg = LaikaAction()
+#     cmd_msg = LaikaCommand()
+#     act_msg.header.stamp = rospy.Time.now()
+#     act_msg.actions = action
+#     cmd_msg.header.stamp = rospy.Time.now()
+#     cmd_msg.cmd = 'step'
+#
+#     pub_act.publish(act_msg)
+#     pub_cmd.publish(cmd_msg)
+#
+#     state_cb.threading_cond.acquire()
+#
+#     while not state_cb.state_update:
+#         print("In step while loop")
+#         state_cb.threading_cond.wait()
+#
+#     ob_tp1 = state_cb.get_curr_state()
+#
+#     state_cb.threading_cond.release()
+#
+#     done = 0
+#
+#     return ob_tp1,done
 
-def step(action,pub_act,pub_cmd,rate):
-    act_msg = LaikaAction()
-    cmd_msg = LaikaCommand()
-    act_msg.header.stamp = rospy.Time.now()
-    act_msg.actions = action
-    cmd_msg.header.stamp = rospy.Time.now()
-    cmd_msg.cmd = 'step'
-    pub_act.publish(act_msg)
-    pub_cmd.publish(cmd_msg)
-    rate.sleep()
-    ob_tp1 = curr_state
-    done = 0
+# def state_callback(msg):
+#     state = []
+#     for i in range(len(msg.states)):
+#         state = state+[msg.states[i].position.x,msg.states[i].position.y,msg.states[i].position.z] \
+#             +[msg.states[i].orientation.x,msg.states[i].orientation.y,msg.states[i].orientation.z] \
+#             +[msg.states[i].lin_vel.x,msg.states[i].lin_vel.y,msg.states[i].lin_vel.z] \
+#             +[msg.states[i].ang_vel.x,msg.states[i].ang_vel.y,msg.states[i].ang_vel.z]
+#     # print(msg.cable_rl)
+#     state = state+list(msg.cable_rl)
+#     global curr_state
+#     curr_state = np.array(state)
 
-    return ob_tp1,done
-
-def state_callback(msg):
-    state = []
-    for i in range(len(msg.states)):
-        state = state+[msg.states[i].position.x,msg.states[i].position.y,msg.states[i].position.z] \
-            +[msg.states[i].orientation.x,msg.states[i].orientation.y,msg.states[i].orientation.z] \
-            +[msg.states[i].lin_vel.x,msg.states[i].lin_vel.y,msg.states[i].lin_vel.z] \
-            +[msg.states[i].ang_vel.x,msg.states[i].ang_vel.y,msg.states[i].ang_vel.z]
-    print(msg.cable_rl)
-    state = state+list(msg.cable_rl)
-    global curr_state
-    curr_state = state
     # rospy.loginfo(msg)
 
-def sample(pub_cmd,pub_act,rate,controller,
+def sample(state_cb,pub_cmd,pub_act,rate,controller,
            num_paths=10,
            horizon=1000,
            render=False,
@@ -70,13 +94,13 @@ def sample(pub_cmd,pub_act,rate,controller,
 
     for i in range(num_paths):
         obs_t, obs_tp1, acs_t, rews_t = [], [], [], []
-        ob_t = reset(pub_cmd,rate)
+        ob_t = state_cb.reset(pub_act,pub_cmd)
         # print(ob_t)
+        rate.sleep()
         for _ in range(horizon):
-
             # Calculate action and step the environment
             ac_t = controller.get_action(ob_t)
-            ob_tp1, _ = step(ac_t,pub_act,pub_cmd,rate)
+            ob_tp1, _ = state_cb.step(ac_t,pub_act,pub_cmd)
             rew_t = 0
             for i in range(9):
                 # rew_t += ob_tp1[i*12]-ob_t[i*12]
@@ -91,12 +115,16 @@ def sample(pub_cmd,pub_act,rate,controller,
             # Move time forward
             ob_t = ob_tp1
 
+            rate.sleep()
+
         path = {"observations":np.array(obs_t),
                 "next_observations":np.array(obs_tp1),
                 "actions":np.array(acs_t),
                 "rewards":np.array(rews_t)}
         paths.append(path)
         print(len(paths))
+        print('Observation dimension: ',path['observations'].shape)
+        print('Action dimension: ',path['actions'].shape)
     return paths
 
 # Utility to compute cost a path for a given cost function
@@ -146,19 +174,20 @@ def compute_normalization(data):
                     'mean_acs':mean_action, 'std_acs':std_action}
     return normalization
 
-def plot_comparison(dyn_model, pub_act, pub_cmd, rate):
+def plot_comparison(dyn_model, state_cb, pub_act, pub_cmd, rate):
     """
     Write a function to generate plots comparing the behavior of the model predictions for each element of the state to the actual ground truth, using randomly sampled actions.
     """
+    print('Plotting nn dynamics results')
     rand_cont = RandomController()
-    s = reset(pub_cmd, rate)
+    s = state_cb.reset(pub_act,pub_cmd)
     env_state_traj = s
     model_state_traj = s
     steps = 100
     for i in range(steps):
         a = rand_cont.get_action(None)
         # Step environment
-        env_s, _ = step(a, pub_act, pub_cmd, rate)
+        env_s, _ = state_cb.step(a,pub_act,pub_cmd)
         env_state_traj = np.vstack((env_state_traj,env_s))
         # Step model
         if i == 0:
@@ -167,16 +196,41 @@ def plot_comparison(dyn_model, pub_act, pub_cmd, rate):
             model_s = dyn_model.predict(model_state_traj[i,:],a)
         model_state_traj = np.vstack((model_state_traj,model_s))
 
-    for i in range(len(s)):
+    body = 2
+    for i in range(body*12,(body+1)*12):
         plt.figure()
         env_state = plt.plot(np.arange(steps+1),env_state_traj[:,i].reshape((steps+1)),label='env state')
         model_state = plt.plot(np.arange(steps+1),model_state_traj[:,i].reshape((steps+1)),label='model state')
-        plt.title('State '+str(i))
+        state = i%12
+        if state == 0:
+            plt.title('Body '+str(body)+', x position')
+        elif state == 1:
+            plt.title('Body '+str(body)+', y position')
+        elif state == 2:
+            plt.title('Body '+str(body)+', z position')
+        elif state == 3:
+            plt.title('Body '+str(body)+', x angle')
+        elif state == 4:
+            plt.title('Body '+str(body)+', y angle')
+        elif state == 5:
+            plt.title('Body '+str(body)+', z angle')
+        elif state == 6:
+            plt.title('Body '+str(body)+', x velocty')
+        elif state == 7:
+            plt.title('Body '+str(body)+', y velocity')
+        elif state == 8:
+            plt.title('Body '+str(body)+', z velocity')
+        elif state == 9:
+            plt.title('Body '+str(body)+', x angular velocity')
+        elif state == 10:
+            plt.title('Body '+str(body)+', y angular velocity')
+        elif state == 11:
+            plt.title('Body '+str(body)+', z angular velocity')
         plt.legend()
         plt.draw()
     plt.show()
 
-def train(pub_cmd,pub_act,rate,
+def train(state_cb,pub_cmd,pub_act,rate,
          cost_fn,
          logdir=None,
          render=False,
@@ -238,7 +292,7 @@ def train(pub_cmd,pub_act,rate,
     # model.
 
     rand_controller = RandomController()
-    paths = sample(pub_cmd,pub_act,rate,rand_controller,num_paths_random,env_horizon,render)
+    paths = sample(state_cb,pub_cmd,pub_act,rate,rand_controller,num_paths_random,env_horizon,render)
     data = paths_to_array(paths)
 
     #========================================================
@@ -288,6 +342,7 @@ def train(pub_cmd,pub_act,rate,
         # Fit dynamics model
         print('Training dynamics model...')
         dyn_model.fit(data)
+        # plot_comparison(dyn_model,state_cb,pub_act,pub_cmd,rate)
         mpc_controller.dyn_model = dyn_model
         costs = []
         returns = []
@@ -295,13 +350,13 @@ def train(pub_cmd,pub_act,rate,
         for i in range(num_paths_onpol):
             print('On policy path: %i' % i)
             obs_t, obs_tp1, acs_t, rews_t = [], [], [], []
-            s_t = reset(pub_cmd,rate)
+            s_t = state_cb.reset(pub_act,pub_cmd)
             total_return = 0
 
             for j in range(env_horizon):
                 # print('Timestep: %i, Return: %g' % (j,total_return))
                 a_t = mpc_controller.get_action(s_t)
-                s_tp1,_ = step(a_t,pub_act,pub_cmd,rate)
+                s_tp1,_ = state_cb.step(a_t,pub_act,pub_cmd)
                 r_t = 0
                 for i in range(9):
                     r_t += s_tp1[i*12]-s_t[i*12]
@@ -366,7 +421,7 @@ def main():
     parser.add_argument('--dyn_iters', '-nd', type=int, default=100)
     parser.add_argument('--batch_size', '-b', type=int, default=512)
     # Data collection
-    parser.add_argument('--random_paths', '-r', type=int, default=10)
+    parser.add_argument('--random_paths', '-r', type=int, default=20)
     parser.add_argument('--onpol_paths', '-d', type=int, default=10)
     parser.add_argument('--simulated_paths', '-sp', type=int, default=1000)
     parser.add_argument('--ep_len', '-ep', type=int, default=1000)
@@ -396,11 +451,13 @@ def main():
     # Initialize publishers and subscribers
     pub_cmd = rospy.Publisher('cmd', LaikaCommand, queue_size=1)
     pub_act = rospy.Publisher('action', LaikaAction, queue_size=1)
-    sub = rospy.Subscriber('state', LaikaStateArray, state_callback)
+
+    state_cb = state_callback()
+    sub_state = rospy.Subscriber('state', LaikaStateArray, callback=state_cb.handle_state_msg, queue_size=1)
 
     cost_fn = laika_cost_fn
 
-    train(pub_cmd,pub_act,rate,cost_fn=cost_fn,
+    train(state_cb,pub_cmd,pub_act,rate,cost_fn=cost_fn,
                  logdir=logdir,
                  render=args.render,
                  learning_rate=args.learning_rate,

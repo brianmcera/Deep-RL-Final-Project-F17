@@ -55,7 +55,7 @@ def laika_cost_fn(state, action, next_state):
     cost = 0
 
     for i in range(9):
-        cost -= ((next_state[i*12]-state[i*12]) + state[i*12+6])/9
+        cost -= ((next_state[i*12]-state[i*12]))/9
 
     return cost
 

@@ -18,21 +18,22 @@ class RandomController(Controller):
 		rl_low = 5
 		torque_high = 5
 		torque_low = -5
-		n_cables = 32
-		n_legs = 4
-		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
-		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
+		self.n_cables = 32
+		self.n_legs = 4
+		# self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
+		# self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
+		self.action_high = torque_high*np.ones(self.n_legs)
+		self.action_low = torque_low*np.ones(self.n_legs)
 		self.ac_dim = 36
-                self.cable_motor_vel = 0.15 
-                self.dt = 0.002
-                self.num_cables = n_cables
+		self.cable_motor_vel = 12
+		self.dt = 0.002
 
 	def get_action(self, state):
 		#action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
-                print((np.random.randint(-1,2,self.num_cables)))
-                print((self.action_low[self.num_cables:]+np.random.uniform(size=self.ac_dim-self.num_cables)*(self.action_high-self.action_low)[self.num_cables:]))
-                print(type(self.ac_dim-self.num_cables))
-                action = np.concatenate((np.random.randint(-1,2,self.num_cables),self.action_low[self.num_cables:]+np.random.uniform(size=(self.ac_dim-self.num_cables))*(self.action_high-self.action_low)[self.num_cables:]))
+                # print((np.random.randint(-1,2,self.num_cables)))
+                # print((self.action_low[self.num_cables:]+np.random.uniform(size=self.ac_dim-self.num_cables)*(self.action_high-self.action_low)[self.num_cables:]))
+                # print(type(self.ac_dim-self.num_cables))
+                action = np.concatenate((np.random.randint(low=-1,high=2,size=self.n_cables),self.action_low+np.random.uniform(size=self.n_legs)*(self.action_high-self.action_low)))
 		return action
 
 class MPCcontroller(Controller):
@@ -59,9 +60,9 @@ class MPCcontroller(Controller):
 		n_legs = 4
 		self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
 		self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
-                self.cable_motor_vel = 0.15 #m/s
-                self.num_cables = n_cables
-                
+		self.cable_motor_vel = 12 #dm/s
+		self.num_cables = n_cables
+
 	def get_action(self, state):
 		# Broadcast state for batch calculations
 		batch_state = np.tile(state,(self.num_simulated_paths,1))
