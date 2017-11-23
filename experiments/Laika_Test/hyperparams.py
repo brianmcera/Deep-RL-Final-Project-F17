@@ -10,28 +10,24 @@ import os.path
 import numpy as np
 
 from gps import __file__ as gps_filepath
-from gps.agent.ros.agent_ros import AgentROS
+from gps.agent.ros.agent_laika_ros import AgentLaikaROS
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
-from gps.algorithm.cost.cost_fk import CostFK
-from gps.algorithm.cost.cost_action import CostAction
-from gps.algorithm.cost.cost_sum import CostSum
 from gps.algorithm.cost.cost_state import CostState
-from gps.algorithm.dynamics.dynamics_lr import DynamicsLR
+from gps.algorithm.dynamics.dynamics_lr_prior import DynamicsLRPrior
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy_opt.policy_opt_tf import PolicyOptTf
-from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.gui.config import generate_experiment_info
+from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL
 from gps.algorithm.policy_opt.tf_model_example import tf_network
+#WHERE IS THE TF POLICY IMPORTED?
 
 SENSOR_DIMS = {
-    'POSITIONS': 9*3,
-    'VELOCITIES': 9*3,
-    'ORIENTATIONS': 9*3,
-    'ANGULAR ACCELERATIONS': 9*3,
-    'ACTION': 32 + 4, #32 CABLES AND 4 MOTORS ON THE LEGS
+    BODY_STATES: 108,
+    CABLE_RL: 32,
+    ACTION: 36, #32 CABLES AND 4 MOTORS ON THE LEGS
 }
 
 BASE_DIR = '/'.join(str.split(gps_filepath, '/')[:-2])
@@ -49,40 +45,32 @@ common = {
 
 if not os.path.exists(common['data_files_dir']):
     os.makedirs(common['data_files_dir'])
-   
-x0s = []
-#ee_tgts = []
-high_number = 1e3
-state_tgts = [];
-for i in range(9):
-    state_tgts = np.append(state_tgts,[high_number]) #positive X direction
-    state_tgts = np.append(state_tgts,[np.zeros((1,11))]) #don't care about other states
-reset_conditions = []
 
 agent = {
-    'type': AgentROS,
-    'dt': 0.05,
+    'type': AgentLaikaROS,
+    'dt': 0.01,
     'conditions': common['conditions'],
     'T': 100,
-    'x0': x0s,
-    'ee_points_tgt': ee_tgts,
-    'reset_conditions': reset_conditions,
+    'state_size' : 140,
+    'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
-    'state_include': [JOINT_ANGLES, JOINT_VELOCITIES, END_EFFECTOR_POINTS,
-                      END_EFFECTOR_POINT_VELOCITIES],
-    'end_effector_points': EE_POINTS,
-    'obs_include': [],
+    'state_include': [BODY_STATES,CABLE_RL],
+    'obs_include': [BODY_STATES,CABLE_RL],
 }
 
 algorithm = {
-    'type': AlgorithmTrajOpt,
+    'type': AlgorithmMDGPS,
     'conditions': common['conditions'],
-    'iterations': 10,
+    'iterations': 12,
+    'kl_step': 1.0,
+    'min_step_mult': 0.5,
+    'max_step_mult': 3.0,
+    'policy_sample_mode': 'replace',
 }
 
 algorithm['init_traj_distr'] = {
     'type': init_lqr,
-    'init_gains':  1.0 / PR2_GAINS,
+    'init_gains':  1.0,
     'init_acc': np.zeros(SENSOR_DIMS[ACTION]),
     'init_var': 1.0,
     'stiffness': 0.5,
@@ -92,15 +80,19 @@ algorithm['init_traj_distr'] = {
     'T': agent['T'],
 }
 
-torque_cost = {
-    'type': CostAction,
-    'wu': 5e-3 / PR2_GAINS,
-}
 
 algorithm['cost'] = {
-    'type': CostSum,
-    'costs': [torque_cost, fk_cost1, fk_cost2],
-    'weights': [1.0, 1.0, 1.0],
+    'type': CostState,
+    'data_types' : {
+        BODY_STATES: {
+            'wp': np.ones(108),
+            'target_state': np.ones(108),
+        },
+        CABLE_RL: {
+            'wp': np.ones(32),
+            'target_state': np.ones(32),
+        },
+    },
 }
 
 algorithm['dynamics'] = {
@@ -118,7 +110,26 @@ algorithm['traj_opt'] = {
     'type': TrajOptLQRPython,
 }
 
-algorithm['policy_opt'] = {}
+algorithm['policy_opt'] = {
+    'type': PolicyOptTf,
+    'network_params': {
+        'obs_include': [BODY_STATES, CABLE_RL],
+        'obs_vector_data': [BODY_STATES, CABLE_RL],
+        'sensor_dims': SENSOR_DIMS,
+        'n_layers': 2,
+        'dim_hidden': [100, 100],
+    },
+    'network_model': tf_network,
+    'iterations': 1000,
+    'weights_file_prefix': EXP_DIR + 'policy',
+}
+
+algorithm['policy_prior'] = {
+    'type': PolicyPriorGMM,
+    'max_clusters': 20,
+    'min_samples_per_cluster': 40,
+    'max_samples': 40,
+}
 
 config = {
     'iterations': algorithm['iterations'],

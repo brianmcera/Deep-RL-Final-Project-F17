@@ -196,7 +196,7 @@ def plot_comparison(dyn_model, state_cb, pub_act, pub_cmd, rate):
             model_s = dyn_model.predict(model_state_traj[i,:],a)
         model_state_traj = np.vstack((model_state_traj,model_s))
 
-    body = 2
+    body = 10
     for i in range(body*12,(body+1)*12):
         plt.figure()
         env_state = plt.plot(np.arange(steps+1),env_state_traj[:,i].reshape((steps+1)),label='env state')
@@ -342,7 +342,7 @@ def train(state_cb,pub_cmd,pub_act,rate,
         # Fit dynamics model
         print('Training dynamics model...')
         dyn_model.fit(data)
-        # plot_comparison(dyn_model,state_cb,pub_act,pub_cmd,rate)
+        plot_comparison(dyn_model,state_cb,pub_act,pub_cmd,rate)
         mpc_controller.dyn_model = dyn_model
         costs = []
         returns = []
@@ -416,20 +416,20 @@ def main():
     parser.add_argument('--seed', type=int, default=3)
     parser.add_argument('--render', action='store_true')
     # Training args
-    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-3)
+    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
     parser.add_argument('--onpol_iters', '-n', type=int, default=10)
     parser.add_argument('--dyn_iters', '-nd', type=int, default=100)
     parser.add_argument('--batch_size', '-b', type=int, default=512)
     # Data collection
-    parser.add_argument('--random_paths', '-r', type=int, default=20)
+    parser.add_argument('--random_paths', '-r', type=int, default=10)
     parser.add_argument('--onpol_paths', '-d', type=int, default=10)
     parser.add_argument('--simulated_paths', '-sp', type=int, default=1000)
-    parser.add_argument('--ep_len', '-ep', type=int, default=2000)
+    parser.add_argument('--ep_len', '-ep', type=int, default=4000)
     # Neural network architecture args
     parser.add_argument('--n_layers', '-l', type=int, default=2)
     parser.add_argument('--size', '-s', type=int, default=500)
     # MPC Controller
-    parser.add_argument('--mpc_horizon', '-m', type=int, default=15)
+    parser.add_argument('--mpc_horizon', '-m', type=int, default=10)
     args = parser.parse_args()
 
     # Set seed
