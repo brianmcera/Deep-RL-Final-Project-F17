@@ -132,6 +132,16 @@ class NNDynamicsModel():
             filename = './data/model_weights/fit_'+str(self.fit_counter)+'_'+layer_name+'.csv'
             np.savetxt(filename,weights,delimiter=',')
 
+        print('Saving normalization values')
+        filename_in_mean = './data/model_weights/fit_'+str(self.fit_counter)+'_in_mean.csv'
+        filename_in_std = './data/model_weights/fit_'+str(self.fit_counter)+'_in_std.csv'
+        np.savetxt(filename_in_mean,np.append(self.normalization['mean_obs'],self.normalization['mean_acs']),delimiter=',')
+        np.savetxt(filename_in_std,np.append(self.normalization['std_obs']+self.eps,self.normalization['std_acs']+self.eps),delimiter=',')
+
+        filename_out_mean = './data/model_weights/fit_'+str(self.fit_counter)+'_out_mean.csv'
+        filename_out_std = './data/model_weights/fit_'+str(self.fit_counter)+'_out_std.csv'
+        np.savetxt(filename_out_mean,self.normalization['mean_deltas'],delimiter=',')
+        np.savetxt(filename_out_std,self.normalization['std_deltas'],delimiter=',')
 
         self.fit_counter += 1
 
