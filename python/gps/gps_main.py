@@ -16,10 +16,6 @@ import traceback
 
 # Add gps/python to path so that imports work.
 sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
-print(__file__)
-print(os.path.join(os.path.dirname(__file__), '..'))
-print()
-print(sys.path)
 from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList

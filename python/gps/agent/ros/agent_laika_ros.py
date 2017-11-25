@@ -6,8 +6,9 @@ import threading
 import rospy
 
 from gps.agent.agent import Agent
+from gps.agent.config import AGENT_LAIKA_ROS
 from gps.agent.agent_utils import generate_noise, setup
-from gps_agent_pkg.msg import LaikaState, LaikaStateArray, LaikaAction, LaikaCommand
+from Laika_ROS.msg import LaikaState, LaikaStateArray, LaikaAction, LaikaCommand
 
 try:
     from gps.algorithm.policy.tf_policy import TfPolicy
@@ -28,7 +29,7 @@ class AgentLaikaROS(Agent):
             hyperparams: Dictionary of hyperparameters.
             init_node: Whether or not to initialize a new ROS node.
         """
-        config = copy.deepcopy(agent_laika_ros)
+        config = copy.deepcopy(AGENT_LAIKA_ROS)
         config.update(hyperparams)
         Agent.__init__(self, config)
         

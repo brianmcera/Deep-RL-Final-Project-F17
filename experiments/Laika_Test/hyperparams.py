@@ -12,7 +12,9 @@ import numpy as np
 from gps import __file__ as gps_filepath
 from gps.agent.ros.agent_laika_ros import AgentLaikaROS
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS
 from gps.algorithm.cost.cost_state import CostState
+from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.dynamics.dynamics_lr_prior import DynamicsLRPrior
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
 from gps.algorithm.policy_opt.policy_opt_tf import PolicyOptTf
@@ -20,7 +22,7 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.gui.config import generate_experiment_info
-from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL
+from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL, ACTION
 from gps.algorithm.policy_opt.tf_model_example import tf_network
 #WHERE IS THE TF POLICY IMPORTED?
 
