@@ -59,12 +59,14 @@ class GPSMain(object):
                 iteration, and resumes training at the next iteration.
         Returns: None
         """
+        print('GPS_Main Running')
         try:
             itr_start = self._initialize(itr_load)
 
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
+                        print('Taking Sample')
                         self._take_sample(itr, cond, i)
 
                 traj_sample_lists = [
@@ -183,6 +185,7 @@ class GPSMain(object):
                     'Sampling: iteration %d, condition %d, sample %d.' %
                     (itr, cond, i)
                 )
+                print('taking sample inside _take_sample')
                 self.agent.sample(
                     pol, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])

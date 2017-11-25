@@ -53,6 +53,7 @@ agent = {
     'dt': 0.01,
     'conditions': common['conditions'],
     'T': 100,
+    'substeps': 1,
     'state_size' : 140,
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
@@ -72,7 +73,7 @@ algorithm = {
 
 algorithm['init_traj_distr'] = {
     'type': init_lqr,
-    'init_gains':  1.0,
+    'init_gains':  np.ones(SENSOR_DIMS[ACTION]),
     'init_acc': np.zeros(SENSOR_DIMS[ACTION]),
     'init_var': 1.0,
     'stiffness': 0.5,
@@ -95,6 +96,7 @@ algorithm['cost'] = {
             'target_state': np.ones(32),
         },
     },
+    'alpha': 1e-2,
 }
 
 algorithm['dynamics'] = {

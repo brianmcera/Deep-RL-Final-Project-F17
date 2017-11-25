@@ -9,7 +9,8 @@ from gps.agent.agent import Agent
 from gps.agent.config import AGENT_LAIKA_ROS
 from gps.agent.agent_utils import generate_noise, setup
 from Laika_ROS.msg import LaikaState, LaikaStateArray, LaikaAction, LaikaCommand
-
+from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL, ACTION
+from gps.sample.sample import Sample
 try:
     from gps.algorithm.policy.tf_policy import TfPolicy
 except ImportError:  # user does not have tf installed.
@@ -44,8 +45,7 @@ class AgentLaikaROS(Agent):
         conditions = self._hyperparams['conditions']
 
         self.x0 = []
-        for field in ('x0', 'reset_conditions'):
-            self._hyperparams[field] = setup(self._hyperparams[field],
+        self._hyperparams['x0'] = setup(self._hyperparams['x0'],
                                              conditions)
         self.x0 = self._hyperparams['x0']
 
@@ -91,8 +91,9 @@ class AgentLaikaROS(Agent):
 
     
     def step(self,action):
-        # print('Stepping')
+        print('Stepping')
         # tmp = curr_state
+        
         act_msg = LaikaAction()
         cmd_msg = LaikaCommand()
         act_msg.header.stamp = rospy.Time.now()
@@ -104,6 +105,7 @@ class AgentLaikaROS(Agent):
         self.pub_cmd.publish(cmd_msg)
 
         while (self.pub_cmd.get_num_connections() == 0) or (self.pub_act.get_num_connections() == 0):
+            #print('checking for connections')
             pass
 
         self.threading_cond.acquire()
@@ -162,9 +164,11 @@ class AgentLaikaROS(Agent):
         Returns:
             sample: A Sample object.
         """
-
+        print('agent_laika_ros/sample')
         ob = self.reset(condition)
-        ob_parsed = form_struct_ob(ob)
+        print(ob)
+        ob_parsed = self.form_struct_ob(ob)
+        print('Make new sample')
         new_sample = self._init_sample(ob_parsed)
         U = np.zeros([self.T, self.dU])
         # Generate noise.
@@ -177,11 +181,14 @@ class AgentLaikaROS(Agent):
         for t in range(self.T):
             X_t = new_sample.get_X(t=t)
             obs_t = new_sample.get_obs(t=t)
+            print('Create new action')
             U[t, :] = policy.act(X_t, obs_t, t, noise[t, :])
             if (t+1) < self.T:
                 for _ in range(self._hyperparams['substeps']):
-                    new_X = self.step(U[t,:])
-                    new_X_parsed = form_struct_ob(new_X)
+                    print('Agent_laika_ros/stepping call')
+                    new_X,done = self.step(U[t,:])
+                    print(new_X)
+                    new_X_parsed = self.form_struct_ob(new_X)
                     self._set_sample(new_sample, new_X_parsed, t)
         if save:
             self._samples[condition].append(new_sample)

@@ -41,21 +41,23 @@ rosbuild_add_boost_directories()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-set(DDP_FILES src/robotplugin.cpp
-              src/pr2plugin.cpp
-              src/sample.cpp
-              src/sensor.cpp
-              src/neuralnetwork.cpp
-              src/tfcontroller.cpp
-              src/controller.cpp
-              src/lingausscontroller.cpp
-              src/camerasensor.cpp
-              src/positioncontroller.cpp
-              src/trialcontroller.cpp
-              src/encodersensor.cpp
-              src/encoderfilter.cpp
-	      src/rostopicsensor.cpp
-              src/util.cpp)
+set(DDP_FILES
+  #src/robotplugin.cpp
+  #src/pr2plugin.cpp
+  #src/sample.cpp
+  #src/sensor.cpp
+  #src/neuralnetwork.cpp
+  #src/tfcontroller.cpp
+  #src/controller.cpp
+  #src/lingausscontroller.cpp
+  #src/camerasensor.cpp
+  #src/positioncontroller.cpp
+  #src/trialcontroller.cpp
+  #src/encodersensor.cpp
+  #src/encoderfilter.cpp
+  #src/rostopicsensor.cpp
+  #src/util.cpp
+  )
 
 # Include Caffe
 if (USE_CAFFE)
@@ -84,7 +86,7 @@ if (USE_CAFFE)
     #target_link_libraries(caffe_img_processor caffe protobuf)
 endif (USE_CAFFE)
 
-rosbuild_add_library(gps_agent_lib ${DDP_FILES})
+#rosbuild_add_library(gps_agent_lib ${DDP_FILES})
 #uncomment for test executable
 #rosbuild_add_executable(main src/main.cpp)
 
@@ -99,8 +101,8 @@ rosbuild_add_library(gps_agent_lib ${DDP_FILES})
 #rosbuild_add_executable(torso src/torso.cpp)
 
 # Include Caffe in controller
-if (USE_CAFFE)
-    target_link_libraries(gps_agent_lib caffe protobuf)
-endif (USE_CAFFE)
+#if (USE_CAFFE)
+#    target_link_libraries(gps_agent_lib caffe protobuf)
+#endif (USE_CAFFE)
 
-rosbuild_link_boost(gps_agent_lib thread)# smart_ptr)
+#rosbuild_link_boost(gps_agent_lib thread)# smart_ptr)
