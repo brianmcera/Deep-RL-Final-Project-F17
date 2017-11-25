@@ -9,7 +9,7 @@ from gps.agent.agent import Agent
 from gps.agent.config import AGENT_LAIKA_ROS
 from gps.agent.agent_utils import generate_noise, setup
 from Laika_ROS.msg import LaikaState, LaikaStateArray, LaikaAction, LaikaCommand
-from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL, ACTION
+from gps.proto.gps_pb2 import BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL, ACTION
 from gps.sample.sample import Sample
 try:
     from gps.algorithm.policy.tf_policy import TfPolicy
@@ -188,7 +188,9 @@ class AgentLaikaROS(Agent):
                     print('Agent_laika_ros/stepping call')
                     new_X,done = self.step(U[t,:])
                     new_X_parsed = self.form_struct_ob(new_X)
-                    self._set_sample(new_sample, new_X_parsed, t)
+                self._set_sample(new_sample, new_X_parsed, t)
+                
+        new_sample.set(ACTION,U)
         if save:
             self._samples[condition].append(new_sample)
         return new_sample
@@ -209,7 +211,10 @@ class AgentLaikaROS(Agent):
 
 
     def form_struct_ob(self,ob):
-        state = {BODY_STATES : ob[0:108],
+        positions = [ob[i*6:(i+1)*6] for i in range(18) if i%2==0]
+        velocities = [ob[i*6:(i+1)*6] for i in range(18) if i%2==1]
+        state = {BODY_POSITIONS: np.array(positions).flatten(),
+                 BODY_VELOCITIES: np.array(velocities).flatten(),
                  CABLE_RL : ob[108:]} #hardcoded for now, change later
         return state
 

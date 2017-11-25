@@ -25,8 +25,9 @@ enum SampleType {
   END_EFFECTOR_POINT_VELOCITIES_NO_TARGET = 18;
   NOISE = 19;
   TOTAL_DATA_TYPES = 20;
-  BODY_STATES = 108;
-  CABLE_RL = 32;
+  BODY_POSITIONS = 21;
+  BODY_VELOCITIES = 22;
+  CABLE_RL = 23;
 }
 
 // Message containing the data for a single sample.

@@ -22,12 +22,13 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.gui.config import generate_experiment_info
-from gps.proto.gps_pb2 import BODY_STATES, CABLE_RL, ACTION
+from gps.proto.gps_pb2 import BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL, ACTION
 from gps.algorithm.policy_opt.tf_model_example import tf_network
 #WHERE IS THE TF POLICY IMPORTED?
 
 SENSOR_DIMS = {
-    BODY_STATES: 108,
+    BODY_POSITIONS: 54,
+    BODY_VELOCITIES: 54,
     CABLE_RL: 32,
     ACTION: 36, #32 CABLES AND 4 MOTORS ON THE LEGS
 }
@@ -53,13 +54,13 @@ agent = {
     'type': AgentLaikaROS,
     'dt': 0.002,
     'conditions': common['conditions'],
-    'T': 100,
-    'substeps': 1,
+    'T': 40,
+    'substeps': 50,
     'state_size' : 140,
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
-    'state_include': [BODY_STATES,CABLE_RL],
-    'obs_include': [BODY_STATES,CABLE_RL],
+    'state_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
+    'obs_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
 }
 
 algorithm = {
@@ -88,14 +89,20 @@ algorithm['init_traj_distr'] = {
 algorithm['cost'] = {
     'type': CostState,
     'data_types' : {
-        BODY_STATES: {
-            'wp': np.ones(108),
-            'target_state': np.ones(108)*100,
+        #BODY_POSITIONS: {
+        #    'average': (9,6),
+        #    'wp': np.ones(54),
+        #    'target_state': np.ones(54)*100,
+        #},
+        BODY_VELOCITIES: {
+            'average':(9,6),
+            'wp': [-1.0,0.,0.,0.,0.,0.], #np.ones(6),
+            'target_state': np.zeros(6),
         },
-        CABLE_RL: {
-            'wp': np.ones(32),
-            'target_state': np.ones(32)*100,
-        },
+        #CABLE_RL: {
+        #    'wp': np.ones(32),
+        #    'target_state': np.ones(32)*100,
+        #},
     },
     'alpha': 1e-2,
     'l1':0,
@@ -120,8 +127,8 @@ algorithm['traj_opt'] = {
 algorithm['policy_opt'] = {
     'type': PolicyOptTf,
     'network_params': {
-        'obs_include': [BODY_STATES, CABLE_RL],
-        'obs_vector_data': [BODY_STATES, CABLE_RL],
+        'obs_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
+        'obs_vector_data': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
         'sensor_dims': SENSOR_DIMS,
         'n_layers': 2,
         'dim_hidden': [100, 100],
@@ -146,6 +153,6 @@ config = {
     'gui_on': True,
     'algorithm': algorithm,
     'num_samples': 5,
-}
+ }
 
 common['info'] = generate_experiment_info(config)

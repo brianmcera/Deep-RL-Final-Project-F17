@@ -37,24 +37,33 @@ class CostState(Cost):
             wp = config['wp']
             tgt = config['target_state']
             x = sample.get(data_type)
-            _, dim_sensor = x.shape
 
-            wpm = get_ramp_multiplier(
-                self._hyperparams['ramp_option'], T,
-                wp_final_multiplier=self._hyperparams['wp_final_multiplier']
-            )
-            wp = wp * np.expand_dims(wpm, axis=-1)
-            # Compute state penalty.
-            #print(x.shape)
-            dist = x - tgt
+            if 'average' in config:
+                x = np.mean(x.reshape((T,)+config['average']),axis=1)
+                _,dim_sensor = x.shape
+                num_sensor = config['average'][0]
+                l = x.dot(np.array(wp).T)
+                ls = np.tile(np.array(wp),[T,num_sensor])/num_sensor
+                lss = np.zeros((T,dim_sensor*num_sensor,dim_sensor*num_sensor))
+            else:
+                _, dim_sensor = x.shape
+                
+                wpm = get_ramp_multiplier(
+                    self._hyperparams['ramp_option'], T,
+                    wp_final_multiplier=self._hyperparams['wp_final_multiplier']
+                )
+                wp = wp * np.expand_dims(wpm, axis=-1)
+                # Compute state penalty.
+                #print(x.shape)
+                dist = x - tgt
 
-            # Evaluate penalty term.
-            l, ls, lss = evall1l2term(
-                wp, dist, np.tile(np.eye(dim_sensor), [T, 1, 1]),
-                np.zeros((T, dim_sensor, dim_sensor, dim_sensor)),
-                self._hyperparams['l1'], self._hyperparams['l2'],
-                self._hyperparams['alpha']
-            )
+                # Evaluate penalty term.
+                l, ls, lss = evall1l2term(
+                    wp, dist, np.tile(np.eye(dim_sensor), [T, 1, 1]),
+                    np.zeros((T, dim_sensor, dim_sensor, dim_sensor)),
+                    self._hyperparams['l1'], self._hyperparams['l2'],
+                    self._hyperparams['alpha']
+                )
 
             final_l += l
 
