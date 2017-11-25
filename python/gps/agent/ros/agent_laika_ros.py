@@ -187,7 +187,6 @@ class AgentLaikaROS(Agent):
                 for _ in range(self._hyperparams['substeps']):
                     print('Agent_laika_ros/stepping call')
                     new_X,done = self.step(U[t,:])
-                    print(new_X)
                     new_X_parsed = self.form_struct_ob(new_X)
                     self._set_sample(new_sample, new_X_parsed, t)
         if save:

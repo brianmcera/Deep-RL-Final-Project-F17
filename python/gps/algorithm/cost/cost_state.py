@@ -45,6 +45,7 @@ class CostState(Cost):
             )
             wp = wp * np.expand_dims(wpm, axis=-1)
             # Compute state penalty.
+            #print(x.shape)
             dist = x - tgt
 
             # Evaluate penalty term.

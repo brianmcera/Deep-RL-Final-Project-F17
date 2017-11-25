@@ -43,6 +43,7 @@ common = {
     'target_filename': EXP_DIR + 'target.npz',
     'log_filename': EXP_DIR + 'log.txt',
     'conditions': 1,
+    'iterations':1,
 }
 
 if not os.path.exists(common['data_files_dir']):
@@ -50,7 +51,7 @@ if not os.path.exists(common['data_files_dir']):
 
 agent = {
     'type': AgentLaikaROS,
-    'dt': 0.01,
+    'dt': 0.002,
     'conditions': common['conditions'],
     'T': 100,
     'substeps': 1,
@@ -89,14 +90,16 @@ algorithm['cost'] = {
     'data_types' : {
         BODY_STATES: {
             'wp': np.ones(108),
-            'target_state': np.ones(108),
+            'target_state': np.ones(108)*100,
         },
         CABLE_RL: {
             'wp': np.ones(32),
-            'target_state': np.ones(32),
+            'target_state': np.ones(32)*100,
         },
     },
     'alpha': 1e-2,
+    'l1':0,
+    'l2':1.0,
 }
 
 algorithm['dynamics'] = {
