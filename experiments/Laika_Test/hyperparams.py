@@ -17,6 +17,7 @@ from gps.algorithm.cost.cost_state import CostState
 from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.dynamics.dynamics_lr_prior import DynamicsLRPrior
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
+from gps.algorithm.traj_opt.traj_opt_pilqr import TrajOptPILQR
 from gps.algorithm.policy_opt.policy_opt_tf import PolicyOptTf
 from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
@@ -52,11 +53,11 @@ if not os.path.exists(common['data_files_dir']):
 
 agent = {
     'type': AgentLaikaROS,
-    'dt': 0.002,
+    'dt': 0.1, #NTRT dt * substeps
     'conditions': common['conditions'],
     'T': 40,
     'substeps': 50,
-    'state_size' : 140,
+    'state_size' : 140, #wrong
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
     'state_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
@@ -75,7 +76,7 @@ algorithm = {
 
 algorithm['init_traj_distr'] = {
     'type': init_lqr,
-    'init_gains':  np.ones(SENSOR_DIMS[ACTION]),
+    'init_gains':  np.zeros(SENSOR_DIMS[ACTION]),
     'init_acc': np.zeros(SENSOR_DIMS[ACTION]),
     'init_var': 1.0,
     'stiffness': 0.5,
@@ -104,9 +105,9 @@ algorithm['cost'] = {
         #    'target_state': np.ones(32)*100,
         #},
     },
-    'alpha': 1e-2,
-    'l1':0,
-    'l2':1.0,
+    #'alpha': 1e-3,
+    #'l1':0,
+    #'l2':1.0,
 }
 
 algorithm['dynamics'] = {
@@ -114,7 +115,7 @@ algorithm['dynamics'] = {
     'regularization': 1e-6,
     'prior': {
         'type': DynamicsPriorGMM,
-        'max_clusters': 20,
+        'max_clusters': 40,
         'min_samples_per_cluster': 40,
         'max_samples': 20,
     },
@@ -123,6 +124,12 @@ algorithm['dynamics'] = {
 algorithm['traj_opt'] = {
     'type': TrajOptLQRPython,
 }
+
+#algorithm['traj_opt'] = {
+#    'type': TrajOptPILQR,
+#    'covariance_damping':10.0,
+#    'kl_threshold': 0.5,
+#}
 
 algorithm['policy_opt'] = {
     'type': PolicyOptTf,
@@ -140,7 +147,7 @@ algorithm['policy_opt'] = {
 
 algorithm['policy_prior'] = {
     'type': PolicyPriorGMM,
-    'max_clusters': 20,
+    'max_clusters': 50,
     'min_samples_per_cluster': 40,
     'max_samples': 40,
 }
@@ -148,11 +155,13 @@ algorithm['policy_prior'] = {
 config = {
     'iterations': algorithm['iterations'],
     'common': common,
-    'verbose_trials': 0,
+    'verbose_trials': 1,
+    'verbose_policy_trials':1,
     'agent': agent,
     'gui_on': True,
     'algorithm': algorithm,
     'num_samples': 5,
+    'image_on':False,
  }
 
 common['info'] = generate_experiment_info(config)

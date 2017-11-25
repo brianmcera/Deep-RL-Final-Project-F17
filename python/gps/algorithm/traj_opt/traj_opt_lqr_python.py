@@ -17,7 +17,7 @@ from gps.algorithm.algorithm_badmm import AlgorithmBADMM
 from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger()
 
 
 class TrajOptLQRPython(TrajOpt):
@@ -64,6 +64,7 @@ class TrajOptLQRPython(TrajOpt):
             max_eta = np.ones(T) * self._hyperparams['max_eta']
             LOGGER.debug("Running DGD for trajectory %d, avg eta: %f", m,
                          np.mean(eta[:-1]))
+            print("Running DGD for trajectory %d, avg eta: %f" % (m, np.mean(eta[:-1])))
 
         max_itr = (DGD_MAX_LS_ITER if self.cons_per_step else
                    DGD_MAX_ITER)
@@ -71,7 +72,7 @@ class TrajOptLQRPython(TrajOpt):
             if not self.cons_per_step:
                 LOGGER.debug("Iteration %d, bracket: (%.2e , %.2e , %.2e)", itr,
                              min_eta, eta, max_eta)
-
+                print("Iteration %d, bracket: (%.2e , %.2e , %.2e)" % (itr, min_eta, eta, max_eta))
             # Run fwd/bwd pass, note that eta may be updated.
             # Compute KL divergence constraint violation.
             traj_distr, eta = self.backward(prev_traj_distr, traj_info,
@@ -97,11 +98,13 @@ class TrajOptLQRPython(TrajOpt):
                 if not self.cons_per_step:
                     LOGGER.debug("KL: %f / %f, converged iteration %d", kl_div,
                                  kl_step, itr)
+                    print("KL: %f / %f, converged iteration %d" % (kl_div, kl_step, itr))
                 else:
                     LOGGER.debug(
                             "KL: %f / %f, converged iteration %d",
                             np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr
                     )
+                    print("KL: %f / %f, converged iteration %d" % (np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr))
                 break
 
             if not self.cons_per_step:
@@ -112,12 +115,14 @@ class TrajOptLQRPython(TrajOpt):
                     new_eta = max(geom, 0.1*max_eta)
                     LOGGER.debug("KL: %f / %f, eta too big, new eta: %f",
                                  kl_div, kl_step, new_eta)
+                    print("KL: %f / %f, eta too big, new eta: %f" % (kl_div, kl_step, new_eta))
                 else: # Eta was too small.
                     min_eta = eta
                     geom = np.sqrt(min_eta*max_eta)  # Geometric mean.
                     new_eta = min(geom, 10.0*min_eta)
                     LOGGER.debug("KL: %f / %f, eta too small, new eta: %f",
                                  kl_div, kl_step, new_eta)
+                    print("KL: %f / %f, eta too small, new eta: %f" % (kl_div, kl_step, new_eta))
 
                 # Logarithmic mean: log_mean(x,y) = (y - x)/(log(y) - log(x))
                 eta = new_eta
@@ -429,6 +434,7 @@ class TrajOptLQRPython(TrajOpt):
                 traj_distr.chol_pol_covar = new_cpS
 
             # Increment eta on non-SPD Q-function.
+            print("Eta: %f" % eta)
             if fail:
                 if not self.cons_per_step:
                     old_eta = eta

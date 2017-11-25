@@ -79,6 +79,7 @@ class GPSMain(object):
 
                 self._take_iteration(itr, traj_sample_lists)
                 pol_sample_lists = self._take_policy_samples()
+                print('policy sample lists: ',pol_sample_lists)
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
@@ -229,7 +230,9 @@ class GPSMain(object):
             # AlgorithmTrajOpt
             return None
         verbose = self._hyperparams['verbose_policy_trials']
+        print('check2')
         if self.gui:
+            print('taking policy samples')
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
         # Since this isn't noisy, just take one sample.
@@ -315,6 +318,7 @@ def main():
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     else:
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+                
 
     if args.new:
         from shutil import copy
@@ -350,6 +354,7 @@ def main():
                  (exp_name, hyperparams_file))
 
     hyperparams = imp.load_source('hyperparams', hyperparams_file)
+    print('test policy N is',test_policy_N)
     if args.targetsetup:
         try:
             import matplotlib.pyplot as plt
@@ -376,6 +381,7 @@ def main():
         data_filenames = os.listdir(data_files_dir)
         algorithm_prefix = 'algorithm_itr_'
         algorithm_filenames = [f for f in data_filenames if f.startswith(algorithm_prefix)]
+        print(algorithm_filenames)
         current_algorithm = sorted(algorithm_filenames, reverse=True)[0]
         current_itr = int(current_algorithm[len(algorithm_prefix):len(algorithm_prefix)+2])
 
