@@ -212,6 +212,7 @@ class GPSMain(object):
             itr: Iteration number.
         Returns: None
         """
+        print('Taking dynamics and policy iteration %i' % itr)
         if self.gui:
             self.gui.set_status_text('Calculating.')
             self.gui.start_display_calculating()
