@@ -339,6 +339,8 @@ class GPSTrainingGUI(object):
                     itr_data += ' %8.2f' % (pol_costs[m])
                 else:
                     itr_data += ' %8s' % ("N/A")
+
+        print(itr_data)
         self.append_output_text(itr_data)
 
     def _update_trajectory_visualizations(self, algorithm, agent,
@@ -352,7 +354,7 @@ class GPSTrainingGUI(object):
             self._traj_visualizer.clear(m)
             self._traj_visualizer.set_lim(i=m, xlim=xlim, ylim=ylim, zlim=zlim)
             if algorithm._hyperparams['fit_dynamics']:
-                self._update_linear_gaussian_controller_plots(algorithm, agent, m)                                
+                self._update_linear_gaussian_controller_plots(algorithm, agent, m)
             self._update_samples_plots(traj_sample_lists, m, 'green', 'Trajectory Samples')
             if pol_sample_lists:
                 self._update_samples_plots(pol_sample_lists,  m, 'blue',  'Policy Samples')
