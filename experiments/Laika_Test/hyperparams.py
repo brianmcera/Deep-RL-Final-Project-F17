@@ -53,10 +53,10 @@ if not os.path.exists(common['data_files_dir']):
 
 agent = {
     'type': AgentLaikaROS,
-    'dt': 0.1, #NTRT dt * substeps
+    'dt': 0.02, #NTRT dt * substeps
     'conditions': common['conditions'],
-    'T': 40,
-    'substeps': 50,
+    'T': 100,
+    'substeps': 10,
     'state_size' : 140, #wrong
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
@@ -160,7 +160,7 @@ config = {
     'agent': agent,
     'gui_on': True,
     'algorithm': algorithm,
-    'num_samples': 5,
+    'num_samples': 25,
     'image_on':False,
  }
 

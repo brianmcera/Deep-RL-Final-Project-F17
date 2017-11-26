@@ -168,6 +168,7 @@ class PolicyOptTf(PolicyOpt):
                 if (i+1) % 500 == 0:
                     LOGGER.info('tensorflow iteration %d, average loss %f',
                                     i+1, average_loss / 500)
+                    print('tensorflow iteration %d, average loss %f' % (i+1, average_loss / 500))
                     average_loss = 0
             average_loss = 0
 
@@ -186,6 +187,7 @@ class PolicyOptTf(PolicyOpt):
             if (i+1) % 50 == 0:
                 LOGGER.info('tensorflow iteration %d, average loss %f',
                              i+1, average_loss / 50)
+                print('tensorflow iteration %d, average loss %f' % (i+1, average_loss / 50))
                 average_loss = 0
 
         feed_dict = {self.obs_tensor: obs}
@@ -283,4 +285,3 @@ class PolicyOptTf(PolicyOpt):
             f.write(state['wts'])
             f.seek(0)
             self.restore_model(f.name)
-

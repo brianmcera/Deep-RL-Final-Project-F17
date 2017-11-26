@@ -66,7 +66,7 @@ class GPSMain(object):
             for itr in range(itr_start, self._hyperparams['iterations']):
                 for cond in self._train_idx:
                     for i in range(self._hyperparams['num_samples']):
-                        print('Taking Sample')
+                        print('Taking Sample %i/%i' % (i+1, self._hyperparams['num_samples']))
                         self._take_sample(itr, cond, i)
 
                 traj_sample_lists = [
@@ -186,7 +186,7 @@ class GPSMain(object):
                     'Sampling: iteration %d, condition %d, sample %d.' %
                     (itr, cond, i)
                 )
-                print('taking sample inside _take_sample')
+                # print('taking sample inside _take_sample')
                 self.agent.sample(
                     pol, cond,
                     verbose=(i < self._hyperparams['verbose_trials'])
@@ -230,9 +230,9 @@ class GPSMain(object):
             # AlgorithmTrajOpt
             return None
         verbose = self._hyperparams['verbose_policy_trials']
-        print('check2')
+        # print('check2')
         if self.gui:
-            print('taking policy samples')
+            # print('taking policy samples')
             self.gui.set_status_text('Taking policy samples.')
         pol_samples = [[None] for _ in range(len(self._test_idx))]
         # Since this isn't noisy, just take one sample.
@@ -318,7 +318,7 @@ def main():
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     else:
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-                
+
 
     if args.new:
         from shutil import copy

@@ -14,26 +14,26 @@ class Controller():
 class RandomController(Controller):
 	def __init__(self):
 		print('Initializing random controller...')
-		rl_high = 12 #kept for now, but useless since the checks will happen on NTRT side
-		rl_low = 5
+		rl_high = 20 #kept for now, but useless since the checks will happen on NTRT side
+		rl_low = -20
 		torque_high = 5
 		torque_low = -5
 		self.n_cables = 32
 		self.n_legs = 4
-		# self.action_high = np.concatenate((rl_high*np.ones(n_cables),torque_high*np.ones(n_legs)))
-		# self.action_low = np.concatenate((rl_low*np.ones(n_cables),torque_low*np.ones(n_legs)))
-		self.action_high = torque_high*np.ones(self.n_legs)
-		self.action_low = torque_low*np.ones(self.n_legs)
+		self.action_high = np.concatenate((rl_high*np.ones(self.n_cables),torque_high*np.ones(self.n_legs)))
+		self.action_low = np.concatenate((rl_low*np.ones(self.n_cables),torque_low*np.ones(self.n_legs)))
+		# self.action_high = torque_high*np.ones(self.n_legs)
+		# self.action_low = torque_low*np.ones(self.n_legs)
 		self.ac_dim = 36
 		self.cable_motor_vel = 12
 		self.dt = 0.002
 
 	def get_action(self, state):
-		#action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
-                # print((np.random.randint(-1,2,self.num_cables)))
-                # print((self.action_low[self.num_cables:]+np.random.uniform(size=self.ac_dim-self.num_cables)*(self.action_high-self.action_low)[self.num_cables:]))
-                # print(type(self.ac_dim-self.num_cables))
-                action = np.concatenate((np.random.randint(low=-1,high=2,size=self.n_cables),self.action_low+np.random.uniform(size=self.n_legs)*(self.action_high-self.action_low)))
+		action = self.action_low+np.random.uniform(size=self.ac_dim)*(self.action_high-self.action_low)
+        # print((np.random.randint(-1,2,self.num_cables)))
+        # print((self.action_low[self.num_cables:]+np.random.uniform(size=self.ac_dim-self.num_cables)*(self.action_high-self.action_low)[self.num_cables:]))
+        # print(type(self.ac_dim-self.num_cables))
+        # action = np.concatenate((np.random.randint(low=-1,high=2,size=self.n_cables),self.action_low+np.random.uniform(size=self.n_legs)*(self.action_high-self.action_low)))
 		return action
 
 class MPCcontroller(Controller):

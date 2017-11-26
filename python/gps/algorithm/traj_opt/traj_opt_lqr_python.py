@@ -59,6 +59,7 @@ class TrajOptLQRPython(TrajOpt):
             min_eta = self._hyperparams['min_eta']
             max_eta = self._hyperparams['max_eta']
             LOGGER.debug("Running DGD for trajectory %d, eta: %f", m, eta)
+            print("Running DGD for trajectory %d, eta: %f" % (m, eta))
         else:
             min_eta = np.ones(T) * self._hyperparams['min_eta']
             max_eta = np.ones(T) * self._hyperparams['max_eta']
@@ -168,6 +169,7 @@ class TrajOptLQRPython(TrajOpt):
                             "KL: %f / %f, converged iteration %d",
                             np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr
                     )
+                    print("KL: %f / %f, converged iteration %d" % (np.mean(kl_div[:-1]), np.mean(kl_step[:-1]), itr))
                     break
 
                 m_b = (BETA1 * m_b + (1-BETA1) * con[:-1])
@@ -372,6 +374,7 @@ class TrajOptLQRPython(TrajOpt):
                     # Error thrown when Qtt[idx_u, idx_u] is not
                     # symmetric positive definite.
                     LOGGER.debug('LinAlgError: %s', e)
+                    print('LinAlgError: %s' % e)
                     fail = t if self.cons_per_step else True
                     break
 
@@ -440,12 +443,14 @@ class TrajOptLQRPython(TrajOpt):
                     old_eta = eta
                     eta = eta0 + del_
                     LOGGER.debug('Increasing eta: %f -> %f', old_eta, eta)
+                    print('Increasing eta: %f -> %f' % (old_eta, eta))
                     del_ *= 2  # Increase del_ exponentially on failure.
                 else:
                     old_eta = eta[fail]
                     eta[fail] = eta0[fail] + del_[fail]
                     LOGGER.debug('Increasing eta %d: %f -> %f',
                                  fail, old_eta, eta[fail])
+                    print('Increasing eta %d: %f -> %f' % (fail, old_eta, eta[fail]))
                     del_[fail] *= 2  # Increase del_ exponentially on failure.
                 if self.cons_per_step:
                     fail_check = (eta[fail] >= 1e16)

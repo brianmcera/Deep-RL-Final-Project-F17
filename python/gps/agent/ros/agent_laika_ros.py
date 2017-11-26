@@ -16,7 +16,8 @@ try:
 except ImportError:  # user does not have tf installed.
     TfPolicy = None
 
-    
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class AgentLaikaROS(Agent):
     """
@@ -33,13 +34,13 @@ class AgentLaikaROS(Agent):
         config = copy.deepcopy(AGENT_LAIKA_ROS)
         config.update(hyperparams)
         Agent.__init__(self, config)
-        
+
         if init_node:
             rospy.init_node('gps_Laika_agent_ros_node')
         self.pub_cmd = rospy.Publisher('cmd', LaikaCommand, queue_size=1)
         self.pub_act = rospy.Publisher('action', LaikaAction, queue_size=1)
         self.sub_state = rospy.Subscriber('state', LaikaStateArray, callback=self.handle_state_msg, queue_size=1)
-        
+
         self._seq_id = 0  # Used for setting seq in ROS commands.
 
         conditions = self._hyperparams['conditions']
@@ -87,13 +88,14 @@ class AgentLaikaROS(Agent):
         obs = self.get_curr_state()
 
         self.threading_cond.release()
+
+        print('Simulation reset')
         return obs
 
-    
     def step(self,action):
-        print('Stepping')
+        # print('Stepping')
         # tmp = curr_state
-        
+
         act_msg = LaikaAction()
         cmd_msg = LaikaCommand()
         act_msg.header.stamp = rospy.Time.now()
@@ -146,7 +148,30 @@ class AgentLaikaROS(Agent):
         # print("Got to notify")
         self.threading_cond.notify()
         self.threading_cond.release()
-        
+
+        # Plot positions
+        # fig = plt.figure(1)
+        # ax = fig.gca(projection='3d')
+        #
+        # plt.cla()
+        # positions = []
+        # for i in range(18):
+        #     if i%2 == 0:
+        #         positions.append(curr_state[i*6:(i+1)*6])
+        #         # positions = curr_state[i*6:(i+1)*6]
+        #         # ax.scatter(positions[0],-positions[2],positions[1])
+        # positions = np.array(positions)
+        # body = positions[0:5,:]
+        # front_legs = np.vstack((positions[7,:],positions[0,:],positions[8,:]))
+        # back_legs = np.vstack((positions[5,:],positions[4,:],positions[6,:]))
+        #
+        # ax.plot(body[:,0],-body[:,2],body[:,1],'-bo')
+        # ax.plot(front_legs[:,0],-front_legs[:,2],front_legs[:,1],'-ro')
+        # ax.plot(back_legs[:,0],-back_legs[:,2],back_legs[:,1],'-go')
+        #
+        # ax.set_zlim(0,40)
+        # plt.draw()
+
     def get_curr_state(self):
         self.state_update = False
         return self.curr_state
@@ -164,11 +189,11 @@ class AgentLaikaROS(Agent):
         Returns:
             sample: A Sample object.
         """
-        print('agent_laika_ros/sample')
+        # print('agent_laika_ros/sample: getting new sample')
         ob = self.reset(condition)
-        print(ob)
+        # print(ob)
         ob_parsed = self.form_struct_ob(ob)
-        print('Make new sample')
+        # print('Make new sample')
         new_sample = self._init_sample(ob_parsed)
         U = np.zeros([self.T, self.dU])
         # Generate noise.
@@ -181,15 +206,15 @@ class AgentLaikaROS(Agent):
         for t in range(self.T):
             X_t = new_sample.get_X(t=t)
             obs_t = new_sample.get_obs(t=t)
-            print('Create new action')
+            # print('Create new action')
             U[t, :] = policy.act(X_t, obs_t, t, noise[t, :])
             if (t+1) < self.T:
                 for _ in range(self._hyperparams['substeps']):
-                    print('Agent_laika_ros/stepping call')
+                    # print('Agent_laika_ros/stepping call')
                     new_X,done = self.step(U[t,:])
                     new_X_parsed = self.form_struct_ob(new_X)
                 self._set_sample(new_sample, new_X_parsed, t)
-                
+
         new_sample.set(ACTION,U)
         if save:
             self._samples[condition].append(new_sample)
@@ -204,7 +229,7 @@ class AgentLaikaROS(Agent):
         self._set_sample(sample, X, -1)
         return sample
 
-    
+
     def _set_sample(self, sample, X, t):
         for sensor in X.keys():
             sample.set(sensor, np.array(X[sensor]), t=t+1)
@@ -217,7 +242,3 @@ class AgentLaikaROS(Agent):
                  BODY_VELOCITIES: np.array(velocities).flatten(),
                  CABLE_RL : ob[108:]} #hardcoded for now, change later
         return state
-
-
-
-        
