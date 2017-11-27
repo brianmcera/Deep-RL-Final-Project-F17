@@ -104,7 +104,7 @@ class GPSMain(object):
 
                 # Calculate average costs from policy samples and print results
                 costs = [np.mean(np.sum(self.algorithm.prev[m].cs, axis=1)) for m in range(self.algorithm.M)]
-                # self._print_pol_sample_results(itr, self.algorithm, costs, pol_sample_lists)
+                self._print_pol_sample_results(itr, self.algorithm, costs, pol_sample_lists)
 
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
