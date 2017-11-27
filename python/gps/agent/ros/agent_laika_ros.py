@@ -61,7 +61,7 @@ class AgentLaikaROS(Agent):
         self.threading_cond = threading.Condition()
 
 
-    def reset(self, condition):
+    def reset(self, condition, policy=None):
         """
         Reset the agent for a particular experiment condition.
         Args:
@@ -69,13 +69,25 @@ class AgentLaikaROS(Agent):
         """
         cmd_msg = LaikaCommand()
         cmd_msg.header.stamp = rospy.Time.now()
-        cmd_msg.cmd = 'reset'
 
+        reset_with_action = self._hyperparams['reset_with_rand_action']
         # print("Number of connections: ",pub_cmd.get_num_connections())
         while self.pub_cmd.get_num_connections() == 0:
             pass
         # print(cmd_msg)
-        self.pub_cmd.publish(cmd_msg)
+
+        if(reset_with_action):
+            print('Simulation reset with randomized action')
+            cmd_msg.cmd = 'reset_w_action'
+            self.pub_cmd.publish(cmd_msg)
+            act_msg = LaikaAction()
+            act_msg.header.stamp = rospy.Time.now()
+            act_msg.actions = (np.random.uniform(size=self.dU)-0.5)*10
+            self.pub_act.publish(act_msg)
+        else:
+            print('Simulation reset')
+            cmd_msg.cmd = 'reset'
+            self.pub_cmd.publish(cmd_msg)
 
         # time.sleep(0.5)
         self.threading_cond.acquire()
@@ -89,7 +101,6 @@ class AgentLaikaROS(Agent):
 
         self.threading_cond.release()
 
-        print('Simulation reset')
         return obs
 
     def step(self,action):

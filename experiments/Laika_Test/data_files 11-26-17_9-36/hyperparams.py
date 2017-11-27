@@ -55,10 +55,9 @@ agent = {
     'type': AgentLaikaROS,
     'dt': 0.02, #NTRT dt * substeps
     'conditions': common['conditions'],
-    'reset_with_rand_action': True,
     'T': 100,
-    'substeps': 10,
-    'state_size' : 140,
+    'substeps': 20,
+    'state_size' : 140, #wrong
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
     'state_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
@@ -124,6 +123,7 @@ algorithm['dynamics'] = {
 
 algorithm['traj_opt'] = {
     'type': TrajOptLQRPython,
+    'cons_per_step': False,#True,
 }
 
 #algorithm['traj_opt'] = {
@@ -161,7 +161,7 @@ config = {
     'agent': agent,
     'gui_on': True,
     'algorithm': algorithm,
-    'num_samples': 25,
+    'num_samples': 15,
     'image_on':False,
  }
 
