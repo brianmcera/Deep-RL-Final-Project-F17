@@ -13,6 +13,7 @@ import argparse
 import threading
 import time
 import traceback
+import numpy as np
 
 # Add gps/python to path so that imports work.
 sys.path.append('/'.join(str.split(__file__, '/')[:-2]))
@@ -77,10 +78,34 @@ class GPSMain(object):
                 # Clear agent samples.
                 self.agent.clear_samples()
 
+                # tf_sess = self.algorithm.policy_opt.sess
+                # print(tf_sess.graph.get_tensor_by_name('w_1:0').eval(session=tf_sess))
                 self._take_iteration(itr, traj_sample_lists)
+                # print(tf_sess.graph.get_tensor_by_name('w_1:0').eval(session=tf_sess))
+
+                # Save tensorflow NN weights as csv
+                print('Saving NN weights')
+                tf_sess = self.algorithm.policy_opt.sess
+                policy_opt_params = self.algorithm.policy_opt._hyperparams
+                with tf_sess.graph.as_default():
+                    for i in range(policy_opt_params['network_params']['n_layers']+1):
+                        kernel = tf_sess.graph.get_tensor_by_name('w_'+str(i)+':0').eval(session=tf_sess)
+                        bias = tf_sess.graph.get_tensor_by_name('b_'+str(i)+':0').eval(session=tf_sess)
+                        # print(kernel.shape)
+                        # print(bias.shape)
+                        weights = np.vstack((kernel,bias.reshape(1,len(bias))))
+                        # print(weights.shape)
+                        filename = self._data_files_dir + ('pol_wgts_l_%d_itr_%d.csv' % (i, itr))
+                        np.savetxt(filename,weights,delimiter=',')
+
                 pol_sample_lists = self._take_policy_samples()
-                print('policy sample lists: ',pol_sample_lists)
+                # print('policy sample lists: ',pol_sample_lists)
                 self._log_data(itr, traj_sample_lists, pol_sample_lists)
+
+                # Calculate average costs from policy samples and print results
+                costs = [np.mean(np.sum(self.algorithm.prev[m].cs, axis=1)) for m in range(self.algorithm.M)]
+                # self._print_pol_sample_results(itr, self.algorithm, costs, pol_sample_lists)
+
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
         finally:
@@ -116,6 +141,53 @@ class GPSMain(object):
             self.gui.set_status_text(('Took %d policy sample(s) from ' +
                 'algorithm state at iteration %d.\n' +
                 'Saved to: data_files/pol_sample_itr_%02d.pkl.\n') % (N, itr, itr))
+
+    def _print_pol_sample_results(self, itr, algorithm, costs, pol_sample_lists):
+        if isinstance(algorithm, AlgorithmMDGPS) or isinstance(algorithm, AlgorithmBADMM):
+            condition_titles = '%3s | %8s %12s' % ('', '', '')
+            itr_data_fields  = '%3s | %8s %12s' % ('itr', 'avg_cost', 'avg_pol_cost')
+        else:
+            condition_titles = '%3s | %8s' % ('', '')
+            itr_data_fields  = '%3s | %8s' % ('itr', 'avg_cost')
+        for m in range(algorithm.M):
+            condition_titles += ' | %8s %9s %-7d' % ('', 'condition', m)
+            itr_data_fields  += ' | %8s %8s %8s' % ('  cost  ', '  step  ', 'entropy ')
+            if isinstance(algorithm, AlgorithmBADMM):
+                condition_titles += ' %8s %8s %8s' % ('', '', '')
+                itr_data_fields  += ' %8s %8s %8s' % ('pol_cost', 'kl_div_i', 'kl_div_f')
+            elif isinstance(algorithm, AlgorithmMDGPS):
+                condition_titles += ' %8s' % ('')
+                itr_data_fields  += ' %8s' % ('pol_cost')
+        print(condition_titles)
+        print(itr_data_fields)
+
+        avg_cost = np.mean(costs)
+        if pol_sample_lists is not None:
+            test_idx = algorithm._hyperparams['test_conditions']
+            # pol_sample_lists is a list of singletons
+            samples = [sl[0] for sl in pol_sample_lists]
+            pol_costs = [np.sum(algorithm.cost[idx].eval(s)[0])
+                    for s, idx in zip(samples, test_idx)]
+            itr_data = '%3d | %8.2f %12.2f' % (itr, avg_cost, np.mean(pol_costs))
+        else:
+            itr_data = '%3d | %8.2f' % (itr, avg_cost)
+        for m in range(algorithm.M):
+            cost = costs[m]
+            step = np.mean(algorithm.prev[m].step_mult * algorithm.base_kl_step)
+            entropy = 2*np.sum(np.log(np.diagonal(algorithm.prev[m].traj_distr.chol_pol_covar,
+                    axis1=1, axis2=2)))
+            itr_data += ' | %8.2f %8.2f %8.2f' % (cost, step, entropy)
+            if isinstance(algorithm, AlgorithmBADMM):
+                kl_div_i = algorithm.cur[m].pol_info.init_kl.mean()
+                kl_div_f = algorithm.cur[m].pol_info.prev_kl.mean()
+                itr_data += ' %8.2f %8.2f %8.2f' % (pol_costs[m], kl_div_i, kl_div_f)
+            elif isinstance(algorithm, AlgorithmMDGPS):
+                # TODO: Change for test/train better.
+                if test_idx == algorithm._hyperparams['train_conditions']:
+                    itr_data += ' %8.2f' % (pol_costs[m])
+                else:
+                    itr_data += ' %8s' % ("N/A")
+        print(itr_data)
 
     def _initialize(self, itr_load):
         """
