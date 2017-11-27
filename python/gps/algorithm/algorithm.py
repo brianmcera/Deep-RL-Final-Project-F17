@@ -214,8 +214,10 @@ class Algorithm(object):
 
         if new_mult > 1:
             LOGGER.debug('Increasing step size multiplier to %f', new_step)
+            print('Increasing step size multiplier to %f' % (new_step))
         else:
             LOGGER.debug('Decreasing step size multiplier to %f', new_step)
+            print('Decreasing step size multiplier to %f' % (new_step))
 
     def _measure_ent(self, m):
         """ Measure the entropy of the current trajectory. """

@@ -14,6 +14,8 @@ from gps.agent.ros.agent_laika_ros import AgentLaikaROS
 from gps.algorithm.algorithm_traj_opt import AlgorithmTrajOpt
 from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS
 from gps.algorithm.cost.cost_state import CostState
+from gps.algorithm.cost.cost_action import CostAction
+from gps.algorithm.cost.cost_sum import CostSum
 from gps.algorithm.dynamics.dynamics_prior_gmm import DynamicsPriorGMM
 from gps.algorithm.dynamics.dynamics_lr_prior import DynamicsLRPrior
 from gps.algorithm.traj_opt.traj_opt_lqr_python import TrajOptLQRPython
@@ -87,28 +89,49 @@ algorithm['init_traj_distr'] = {
     'T': agent['T'],
 }
 
-
-algorithm['cost'] = {
-    'type': CostState,
+vel_cost = {
+    'type' : CostState,
     'data_types' : {
-        #BODY_POSITIONS: {
-        #    'average': (9,6),
-        #    'wp': np.ones(54),
-        #    'target_state': np.ones(54)*100,
-        #},
-        BODY_VELOCITIES: {
+        BODY_VELOCITIES : {
             'average':(9,6),
-            'wp': [-1.0,0.,0.,0.,0.,0.], #np.ones(6),
+            'wp': [-1.,0.,0.,0.,0.,0.], #np.ones(6),
             'target_state': np.zeros(6),
         },
-        #CABLE_RL: {
-        #    'wp': np.ones(32),
-        #    'target_state': np.ones(32)*100,
-        #},
-    },
-    #'alpha': 1e-3,
-    #'l1':0,
-    #'l2':1.0,
+    }
+}
+
+pos_cost = {
+    'type' : CostState,
+    'data_types' : {
+        BODY_POSITIONS : {
+            'average':(9,6),
+            'wp': [0.,-1.,0.,0.,0.,0.], #np.ones(6),
+            'target_state': np.zeros(6),
+        },
+    }
+}
+
+# rl_cost = {
+#     'type' : CostState,
+#     'data_types' : {
+#         CABLE_RL : {
+#             'average':(9,6),
+#             'wp': [-1.,0.,0.,0.,0.,0.], #np.ones(6),
+#             'target_state': np.zeros(6),
+#         },
+#     }
+# }
+
+action_cost = {
+    'type' : CostAction,
+    'wu': np.ones(36),
+    'target_state': np.zeros(36),
+}
+
+algorithm['cost'] = {
+    'type': CostSum,
+    'costs' : [pos_cost, vel_cost, action_cost],
+    'weights' : [1., 1., 1e-2]
 }
 
 algorithm['dynamics'] = {
@@ -142,7 +165,7 @@ algorithm['policy_opt'] = {
         'dim_hidden': [100, 100],
     },
     'network_model': tf_network,
-    'iterations': 1000,
+    'iterations': 5000,
     'weights_file_prefix': EXP_DIR + 'policy',
 }
 

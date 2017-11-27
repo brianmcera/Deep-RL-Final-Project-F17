@@ -21,6 +21,8 @@ from gps.gui.gps_training_gui import GPSTrainingGUI
 from gps.utility.data_logger import DataLogger
 from gps.sample.sample_list import SampleList
 
+from gps.algorithm.algorithm_mdgps import AlgorithmMDGPS
+from gps.algorithm.algorithm_badmm import AlgorithmBADMM
 
 class GPSMain(object):
     """ Main class to run algorithms and experiments. """
