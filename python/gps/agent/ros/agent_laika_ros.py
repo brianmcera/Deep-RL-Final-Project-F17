@@ -82,7 +82,8 @@ class AgentLaikaROS(Agent):
             self.pub_cmd.publish(cmd_msg)
             act_msg = LaikaAction()
             act_msg.header.stamp = rospy.Time.now()
-            act_msg.actions = (np.random.uniform(size=self.dU)-0.5)*10
+            # act_msg.actions = (np.random.uniform(size=self.dU)-0.5)*10
+            act_msg.actions = (np.random.uniform(size=self.dU)-0.5)*40
             self.pub_act.publish(act_msg)
         else:
             print('Simulation reset')

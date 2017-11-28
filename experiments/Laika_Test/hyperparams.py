@@ -55,11 +55,11 @@ if not os.path.exists(common['data_files_dir']):
 
 agent = {
     'type': AgentLaikaROS,
-    'dt': 0.02, #NTRT dt * substeps
+    'dt': 0.05, #NTRT dt * substeps
     'conditions': common['conditions'],
     'reset_with_rand_action': True,
     'T': 100,
-    'substeps': 10,
+    'substeps': 50,
     'state_size' : 140,
     'x0': [np.zeros(140)], #debug: change later
     'sensor_dims': SENSOR_DIMS,
@@ -105,8 +105,8 @@ pos_cost = {
     'data_types' : {
         BODY_POSITIONS : {
             'average':(9,6),
-            'wp': [0.,-1.,0.,0.,0.,0.], #np.ones(6),
-            'target_state': np.zeros(6),
+            'wp': [-1.,-1.,0.,0.,0.,0.], #np.ones(6),
+            'target_state': np.array([1000., 1000., 0., 0., 0., 0.]), #np.zeros(6),
         },
     }
 }
@@ -131,7 +131,7 @@ action_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs' : [pos_cost, vel_cost, action_cost],
-    'weights' : [1., 1., 1e-2]
+    'weights' : [1., 0., 1e-2]
 }
 
 algorithm['dynamics'] = {

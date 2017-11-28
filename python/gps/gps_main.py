@@ -97,8 +97,16 @@ class GPSMain(object):
                         # print(bias.shape)
                         weights = np.vstack((kernel,bias.reshape(1,len(bias))))
                         # print(weights.shape)
-                        filename = self._data_files_dir + ('pol_wgts_l_%d_itr_%d.csv' % (i, itr))
+                        filename = self._data_files_dir + ('pol_wgts_itr_%d_l_%d.csv' % (itr, i))
                         np.savetxt(filename,weights,delimiter=',')
+                if itr == 0:
+                    print('Saving normalization statistics')
+                    scale = np.diag(self.algorithm.policy_opt.policy.scale)
+                    bias = self.algorithm.policy_opt.policy.bias
+                    print(scale.shape)
+                    print(bias.shape)
+                    np.savetxt(self._data_files_dir +'nn_in_scale.csv', scale, delimiter=',')
+                    np.savetxt(self._data_files_dir +'nn_in_bias.csv', bias, delimiter=',')
 
                 pol_sample_lists = self._take_policy_samples()
                 # print('policy sample lists: ',pol_sample_lists)
