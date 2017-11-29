@@ -25,13 +25,19 @@ from gps.algorithm.policy.lin_gauss_init import init_lqr
 from gps.algorithm.policy.policy_prior_gmm import PolicyPriorGMM
 from gps.gui.target_setup_gui import load_pose_from_npz
 from gps.gui.config import generate_experiment_info
-from gps.proto.gps_pb2 import BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL, ACTION
+from gps.proto.gps_pb2 import BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL, ACTION
 from gps.algorithm.policy_opt.tf_model_example import tf_network
 #WHERE IS THE TF POLICY IMPORTED?
 
 SENSOR_DIMS = {
-    BODY_POSITIONS: 54,
-    BODY_VELOCITIES: 54,
+    BODY_POSITIONS_REL: 15,
+    BODY_ANGLES: 15,
+    LEG_POSITIONS_REL: 12,
+    LEG_ANGLES: 12,
+    BODY_VELOCITIES: 15,
+    BODY_ANGULAR_VELOCITIES: 15,
+    LEG_VELOCITIES: 12,
+    LEG_ANGULAR_VELOCITIES: 12,
     CABLE_RL: 32,
     ACTION: 36, #32 CABLES AND 4 MOTORS ON THE LEGS
 }
@@ -61,10 +67,10 @@ agent = {
     'T': 100,
     'substeps': 50,
     'state_size' : 140,
-    'x0': [np.zeros(140)], #debug: change later
+    'x0': [np.zeros(140) for i in range(common['conditions'])], #debug: change later
     'sensor_dims': SENSOR_DIMS,
-    'state_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
-    'obs_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
+    'state_include': [BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL],
+    'obs_include': [BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL],
 }
 
 algorithm = {
@@ -93,9 +99,9 @@ vel_cost = {
     'type' : CostState,
     'data_types' : {
         BODY_VELOCITIES : {
-            'average':(9,6),
-            'wp': [-1.,0.,0.,0.,0.,0.], #np.ones(6),
-            'target_state': np.zeros(6),
+            'average':(5,3),
+            'wp': [-1.,0.,0.], #np.ones(6),
+            'target_state': np.zeros(3),
         },
     }
 }
@@ -103,10 +109,10 @@ vel_cost = {
 pos_cost = {
     'type' : CostState,
     'data_types' : {
-        BODY_POSITIONS : {
-            'average':(9,6),
-            'wp': [-1.,-1.,0.,0.,0.,0.], #np.ones(6),
-            'target_state': np.array([1000., 1000., 0., 0., 0., 0.]), #np.zeros(6),
+        BODY_POSITIONS_REL: {
+            'average':(5,3),
+            'wp': [-1.,-1.,0.], #np.ones(6),
+            'target_state': np.array([1000., 1000., 0.]), #np.zeros(6),
         },
     }
 }
@@ -131,7 +137,7 @@ action_cost = {
 algorithm['cost'] = {
     'type': CostSum,
     'costs' : [pos_cost, vel_cost, action_cost],
-    'weights' : [1., 0., 1e-2]
+    'weights' : [0., 1., 0.]
 }
 
 algorithm['dynamics'] = {
@@ -158,8 +164,8 @@ algorithm['traj_opt'] = {
 algorithm['policy_opt'] = {
     'type': PolicyOptTf,
     'network_params': {
-        'obs_include': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
-        'obs_vector_data': [BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL],
+        'obs_include': [BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL],
+        'obs_vector_data': [BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL],
         'sensor_dims': SENSOR_DIMS,
         'n_layers': 2,
         'dim_hidden': [100, 100],

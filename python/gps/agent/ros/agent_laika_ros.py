@@ -9,7 +9,7 @@ from gps.agent.agent import Agent
 from gps.agent.config import AGENT_LAIKA_ROS
 from gps.agent.agent_utils import generate_noise, setup
 from Laika_ROS.msg import LaikaState, LaikaStateArray, LaikaAction, LaikaCommand
-from gps.proto.gps_pb2 import BODY_POSITIONS, BODY_VELOCITIES, CABLE_RL, ACTION
+from gps.proto.gps_pb2 import ACTION, BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL
 from gps.sample.sample import Sample
 try:
     from gps.algorithm.policy.tf_policy import TfPolicy
@@ -100,6 +100,7 @@ class AgentLaikaROS(Agent):
         # print("Out of while loop")
         obs = self.get_curr_state()
 
+        #print(np.linalg.norm(np.array([obs[i*3:(i+1)*3] for i in range(20,36) if i%4==1]).flatten()))
         self.threading_cond.release()
 
         return obs
@@ -203,6 +204,12 @@ class AgentLaikaROS(Agent):
         """
         # print('agent_laika_ros/sample: getting new sample')
         ob = self.reset(condition)
+
+        #check leg angles at reset
+        while((np.linalg.norm(np.array([ob[i*3:(i+1)*3] for i in range(20,36) if i%4==1]).flatten())) > 0.3):
+            print('bad reset detected, REEEREEEsetting')
+            ob = self.reset(condition)
+            
         # print(ob)
         ob_parsed = self.form_struct_ob(ob)
         # print('Make new sample')
@@ -248,9 +255,28 @@ class AgentLaikaROS(Agent):
 
 
     def form_struct_ob(self,ob):
-        positions = [ob[i*6:(i+1)*6] for i in range(18) if i%2==0]
-        velocities = [ob[i*6:(i+1)*6] for i in range(18) if i%2==1]
-        state = {BODY_POSITIONS: np.array(positions).flatten(),
-                 BODY_VELOCITIES: np.array(velocities).flatten(),
+        body_positions = [ob[i*3:(i+1)*3] for i in range(20) if i%4==0]
+        body_angles = [ob[i*3:(i+1)*3] for i in range(20) if i%4==1]
+        body_velocities = [ob[i*3:(i+1)*3] for i in range(20) if i%4==2]
+        body_angular_velocities = [ob[i*3:(i+1)*3] for i in range(20) if i%4==3]
+        
+        leg_positions = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==0]
+        leg_angles = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==1]
+        leg_velocities = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==2]
+        leg_angular_velocities = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==3]
+
+        body_positions_rel = body_positions-np.mean(body_positions,axis=0) #returns np array
+        leg_positions_rel = np.array(leg_positions).flatten()
+        leg_positions_rel[0:6] = leg_positions[0:6]-np.array([body_positions[-3:],body_positions[-3:]]).flatten() #returns np array
+        leg_positions_rel[6:12] = leg_positions[6:12]-np.array([body_positions[0:3],body_positions[0:3]]).flatten() #returns np array 
+        
+        state = {BODY_POSITIONS_REL: body_positions_rel.flatten(),
+                 BODY_ANGLES: np.array(body_angles).flatten(),
+                 LEG_POSITIONS_REL: leg_positions_rel,
+                 LEG_ANGLES: np.array(leg_angles).flatten(),
+                 BODY_VELOCITIES: np.array(body_velocities).flatten(),
+                 BODY_ANGULAR_VELOCITIES: np.array(body_angular_velocities).flatten(),
+                 LEG_VELOCITIES: np.array(leg_velocities).flatten(),
+                 LEG_ANGULAR_VELOCITIES: np.array(leg_angular_velocities).flatten(),
                  CABLE_RL : ob[108:]} #hardcoded for now, change later
         return state

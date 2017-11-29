@@ -29,7 +29,7 @@ from gps.gui.plotter_3d import Plotter3D
 from gps.gui.image_visualizer import ImageVisualizer
 from gps.gui.util import buffered_axis_limits, load_data_from_npz
 
-from gps.proto.gps_pb2 import ACTION, BODY_POSITIONS, BODY_VELOCITIES, END_EFFECTOR_POINTS
+from gps.proto.gps_pb2 import ACTION, BODY_POSITIONS_REL, BODY_ANGLES, LEG_POSITIONS_REL, LEG_ANGLES,  BODY_VELOCITIES, BODY_ANGULAR_VELOCITIES, LEG_VELOCITIES, LEG_ANGULAR_VELOCITIES, CABLE_RL
 
 # Needed for typechecks
 from gps.algorithm.algorithm_badmm import AlgorithmBADMM
