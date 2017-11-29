@@ -255,28 +255,28 @@ class AgentLaikaROS(Agent):
 
 
     def form_struct_ob(self,ob):
-        body_positions = [ob[i*3:(i+1)*3] for i in range(20) if i%4==0]
-        body_angles = [ob[i*3:(i+1)*3] for i in range(20) if i%4==1]
-        body_velocities = [ob[i*3:(i+1)*3] for i in range(20) if i%4==2]
-        body_angular_velocities = [ob[i*3:(i+1)*3] for i in range(20) if i%4==3]
+        body_positions = np.array([ob[i*3:(i+1)*3] for i in range(20) if i%4==0]).flatten()
+        body_angles = np.array([ob[i*3:(i+1)*3] for i in range(20) if i%4==1]).flatten()
+        body_velocities = np.array([ob[i*3:(i+1)*3] for i in range(20) if i%4==2]).flatten()
+        body_angular_velocities = np.array([ob[i*3:(i+1)*3] for i in range(20) if i%4==3]).flatten()
         
-        leg_positions = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==0]
-        leg_angles = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==1]
-        leg_velocities = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==2]
-        leg_angular_velocities = [ob[i*3:(i+1)*3] for i in range(20,36) if i%4==3]
+        leg_positions = np.array([ob[i*3:(i+1)*3] for i in range(20,36) if i%4==0]).flatten()
+        leg_angles = np.array([ob[i*3:(i+1)*3] for i in range(20,36) if i%4==1]).flatten()
+        leg_velocities = np.array([ob[i*3:(i+1)*3] for i in range(20,36) if i%4==2]).flatten()
+        leg_angular_velocities = np.array([ob[i*3:(i+1)*3] for i in range(20,36) if i%4==3]).flatten()
 
         body_positions_rel = body_positions-np.mean(body_positions,axis=0) #returns np array
-        leg_positions_rel = np.array(leg_positions).flatten()
+        leg_positions_rel = leg_positions
         leg_positions_rel[0:6] = leg_positions[0:6]-np.array([body_positions[-3:],body_positions[-3:]]).flatten() #returns np array
         leg_positions_rel[6:12] = leg_positions[6:12]-np.array([body_positions[0:3],body_positions[0:3]]).flatten() #returns np array 
         
-        state = {BODY_POSITIONS_REL: body_positions_rel.flatten(),
-                 BODY_ANGLES: np.array(body_angles).flatten(),
+        state = {BODY_POSITIONS_REL: body_positions_rel,
+                 BODY_ANGLES: body_angles,
                  LEG_POSITIONS_REL: leg_positions_rel,
-                 LEG_ANGLES: np.array(leg_angles).flatten(),
-                 BODY_VELOCITIES: np.array(body_velocities).flatten(),
-                 BODY_ANGULAR_VELOCITIES: np.array(body_angular_velocities).flatten(),
-                 LEG_VELOCITIES: np.array(leg_velocities).flatten(),
-                 LEG_ANGULAR_VELOCITIES: np.array(leg_angular_velocities).flatten(),
+                 LEG_ANGLES: leg_angles,
+                 BODY_VELOCITIES: body_velocities,
+                 BODY_ANGULAR_VELOCITIES: body_angular_velocities,
+                 LEG_VELOCITIES: leg_velocities,
+                 LEG_ANGULAR_VELOCITIES: leg_angular_velocities,
                  CABLE_RL : ob[108:]} #hardcoded for now, change later
         return state
