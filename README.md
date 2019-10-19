@@ -4,6 +4,7 @@ CS294-112 DEEP REINFORCEMENT LEARNING FINAL PROJECT
 This repository is a fork of a GPS implementation see(see [rll.berkeley.edu/gps]) which we used to implement GPS and Imitation Learning with Tensegrity robots. The abstract of our final project titled 'LEARNING LOCOMOTION FOR TENSEGRITY ROBOTS' is below:
 
  Learning Locomotion Policies for Tensegrity Robots 
+======
 
 Tensegrity robots are a novel class of robots that, while possessing certain mechanically advantageous properties, present a challenging problem in terms of robust control. Especially as there is growing interest in using such robots for locomotion, expressive end-to-end policies need to be developed for these high dimensional systems – policies that can handle rich sensor observation data and complex action inputs. 
 
