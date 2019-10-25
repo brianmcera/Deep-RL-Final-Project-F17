@@ -2,6 +2,7 @@ CS294-112 DEEP REINFORCEMENT LEARNING FINAL PROJECT
 ======
 
 This repository is a fork of a GPS implementation see(see [rll.berkeley.edu/gps]) which we used to implement GPS and Imitation Learning with Tensegrity robots. The abstract of our final project titled 'LEARNING LOCOMOTION FOR TENSEGRITY ROBOTS' is below:
+![robots](/Images/robots.png)
 
  Learning Locomotion Policies for Tensegrity Robots 
 ======
